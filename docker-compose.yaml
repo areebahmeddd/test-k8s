@@ -1,0 +1,45 @@
+networks:
+  test_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+services:
+  api:
+    build: .
+    container_name: api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://todo_admin:todo_pass@db:5432/todos
+    volumes:
+      - ./app:/app/app
+    ports:
+      - "8000:8000"
+    networks:
+      - test_network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    environment:
+      POSTGRES_USER: todo_admin
+      POSTGRES_PASSWORD: todo_pass
+      POSTGRES_DB: todos
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo_admin -d todos"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped

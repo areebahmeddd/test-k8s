@@ -1,0 +1,39 @@
+[project]
+name = "todo-app"
+version = "0.1.0"
+description = "Todo API"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]",
+    "sqlalchemy",
+    "aiosqlite",
+    "asyncpg",
+    "alembic",
+    "pydantic",
+    "pydantic-settings",
+    "PyJWT",
+    "bcrypt",
+    "email-validator",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "ruff",
+    "pre-commit",
+    "pytest-cov",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true

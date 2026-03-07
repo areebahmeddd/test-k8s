@@ -1,0 +1,42 @@
+# Environment
+.venv/
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Test & coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# Node (docs/)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/

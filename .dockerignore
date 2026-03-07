@@ -1,0 +1,60 @@
+# Environment
+.venv/
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Test & coverage
+tests/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+
+# Frontend (not needed in API container)
+docs/
+node_modules/
+
+# Kubernetes manifests
+k8s/
+
+# Logs
+*.log
+
+# Docs & dev tooling
+docs/
+README.md
+Makefile
+docker-compose*.yaml
+.dockerignore
+.pre-commit-config.yaml
