@@ -14,6 +14,12 @@ dependencies = [
     "PyJWT",
     "bcrypt",
     "email-validator",
+    "prometheus-fastapi-instrumentator",
+    "opentelemetry-sdk",
+    "opentelemetry-instrumentation-fastapi",
+    "opentelemetry-instrumentation-sqlalchemy",
+    "opentelemetry-exporter-otlp-proto-grpc",
+    "python-json-logger",
 ]
 
 [dependency-groups]
