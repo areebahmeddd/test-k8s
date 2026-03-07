@@ -5,17 +5,20 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
 
 import app.models  # noqa: F401
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.database import engine
+from app.core.telemetry import setup_telemetry
 from app.models.base import Base
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:  # pragma: no cover
     """Create all database tables on startup and dispose the engine on shutdown."""
+    setup_telemetry(engine)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -38,6 +41,10 @@ app.add_middleware(
 
 app.include_router(api_v1_router)
 
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
+
+app.mount("/", StaticFiles(directory="docs", html=True), name="ui")
+
 
 @app.get("/health", tags=["system"], status_code=status.HTTP_200_OK)
 async def health() -> JSONResponse:
@@ -45,6 +52,3 @@ async def health() -> JSONResponse:
     return JSONResponse(
         content={"status": "ok", "version": settings.version},
     )
-
-
-app.mount("/", StaticFiles(directory="ui", html=True), name="ui")
