@@ -349,7 +349,7 @@ async function doAdd() {
       titleEl.value = "";
       $("new-desc").value = "";
       $("new-due").value = "";
-      $("new-priority").value = "medium";
+      $("new-priority").value = "low";
       render();
     } else {
       const d = await res.json();
@@ -403,6 +403,13 @@ async function doDelete(id) {
     render();
     err("todos-err", "Connection error.");
   }
+}
+
+function toggleExtras() {
+  const panel = $("add-extras");
+  const btn = $("extras-toggle");
+  const isHidden = panel.classList.toggle("hidden");
+  btn.classList.toggle("open", !isHidden);
 }
 
 function toggleConfig() {

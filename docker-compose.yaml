@@ -4,17 +4,23 @@ networks:
 
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
 
 services:
   api:
-    build: .
     container_name: api
+    build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://todo_admin:todo_pass@db:5432/todos
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_SERVICE_NAME: todo-api
     volumes:
       - ./app:/app/app
+      - ./docs:/app/docs
     ports:
       - "8000:8000"
     networks:
@@ -22,11 +28,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
+    env_file: .env
     restart: unless-stopped
 
   db:
-    image: postgres:18-alpine
     container_name: db
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: todo_admin
       POSTGRES_PASSWORD: todo_pass
@@ -42,4 +51,113 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+    restart: unless-stopped
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib:0.147.0
+    command: []
+    ports:
+      - "4317:4317"
+    volumes:
+      - ./monitoring/otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
+    networks:
+      - test_network
+    depends_on:
+      - tempo
+    restart: unless-stopped
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager:v0.31.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - "--log.level=warn"
+    environment:
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.10.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - "--log.level=warn"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - test_network
+    depends_on:
+      - alertmanager
+    restart: unless-stopped
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:12.4.0
+    environment:
+      GF_LOG_LEVEL: "warn"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - test_network
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+
+  loki:
+    container_name: loki
+    image: grafana/loki:3.5.0
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - test_network
+    restart: unless-stopped
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:3.5.0
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - test_network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:2.8.0
+    command:
+      - -config.file=/etc/tempo.yaml
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./monitoring/tempo/tempo-config.yml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    networks:
+      - test_network
     restart: unless-stopped

@@ -333,11 +333,47 @@ select:focus {
   color: var(--ink-muted);
 }
 
+.extras-wrapper {
+  margin-bottom: 24px;
+}
+
+.extras-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 14px;
+  margin-bottom: 0;
+  background: transparent;
+  border: 1px solid rgba(28, 28, 26, 0.1);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.extras-toggle:hover {
+  background: var(--paper-warm);
+  color: var(--ink);
+}
+
+.extras-toggle svg {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.extras-toggle.open svg {
+  transform: rotate(180deg);
+}
+
 .add-extras {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
-  margin-bottom: 28px;
+  margin-top: 10px;
+  margin-bottom: 0;
   padding: 20px;
   background: var(--paper-warm);
   border-radius: var(--radius-sm);
