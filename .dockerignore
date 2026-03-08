@@ -41,10 +41,6 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Frontend (not needed in API container)
-docs/
-node_modules/
-
 # Kubernetes manifests
 k8s/
 

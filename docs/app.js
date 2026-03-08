@@ -184,7 +184,7 @@ async function doLogin() {
       err("login-err", d.detail || "Login failed.");
     }
   } catch {
-    err("login-err", "Cannot reach server. Check API config below.");
+    err("login-err", "Cannot reach server. Check API config.");
   } finally {
     setLoading("login-btn", false);
   }
@@ -215,7 +215,7 @@ async function doRegister() {
       err("register-err", d.detail || "Registration failed.");
     }
   } catch {
-    err("register-err", "Cannot reach server. Check API config below.");
+    err("register-err", "Cannot reach server. Check API config.");
   } finally {
     setLoading("register-btn", false);
   }

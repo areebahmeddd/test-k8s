@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "Todo API"
-    version: str = "0.1.0"
+    version: str = "1.0.0"
     debug: bool = False
 
     database_url: str = "sqlite+aiosqlite:///./todo.db"
