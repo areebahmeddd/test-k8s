@@ -14,9 +14,14 @@ A REST API for managing todos with user authentication. Built with FastAPI, SQLA
 | Packaging  | uv                                      |
 | Linting    | Ruff                                    |
 | Tests      | pytest + pytest-asyncio + httpx         |
+| Metrics    | Prometheus + Alertmanager               |
+| Logs       | Loki + Promtail                         |
+| Traces     | Tempo + OTel Collector (contrib)        |
+| Dashboards | Grafana                                 |
 
 - See [docs/SETUP-py.md](docs/SETUP-py.md) for local Python setup, Docker, migrations, and environment configuration.
 - See [docs/SETUP-k8s.md](docs/SETUP-k8s.md) for Kubernetes deployment.
+- See [docs/MONITORING.md](docs/MONITORING.md) for the observability stack (metrics, logs, traces).
 
 ## API Endpoints
 
@@ -66,6 +71,8 @@ docker compose up --build
 ```
 
 The `api` service waits for the `db` service health check before starting. Database URL is injected via environment in `docker-compose.yaml`.
+
+Monitoring services (Prometheus, Loki, Tempo, Grafana, etc.) are defined in `docker-compose.yaml` but commented out — they are deployed separately via Kubernetes. See [docs/MONITORING.md](docs/MONITORING.md).
 
 ## Make Targets
 
