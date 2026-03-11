@@ -19,9 +19,9 @@ A REST API for managing todos with user authentication. Built with FastAPI, SQLA
 | Traces     | Tempo + OTel Collector (contrib)        |
 | Dashboards | Grafana                                 |
 
-- See [docs/SETUP-py.md](docs/SETUP-py.md) for local Python setup, Docker, migrations, and environment configuration.
-- See [docs/SETUP-k8s.md](docs/SETUP-k8s.md) for Kubernetes deployment.
-- See [docs/MONITORING.md](docs/MONITORING.md) for the observability stack (metrics, logs, traces).
+- See [docs/markdown/SETUP-py.md](docs/markdown/SETUP-py.md) for local Python setup, Docker, migrations, and environment configuration.
+- See [docs/markdown/SETUP-k8s.md](docs/markdown/SETUP-k8s.md) for Kubernetes deployment.
+- See [docs/markdown/MONITORING.md](docs/markdown/MONITORING.md) for the observability stack (metrics, logs, traces).
 
 ## API Endpoints
 
@@ -53,7 +53,21 @@ All todo endpoints require a valid `Authorization: Bearer <access_token>` header
 | ------ | --------- | -------------- |
 | GET    | `/health` | Liveness check |
 
-## Running Tests
+## Quick Start
+
+### Docker
+
+```bash
+make up
+# or
+docker compose up
+```
+
+The `api` service waits for the `db` service health check before starting. Database URL is injected via environment in `docker-compose.yaml`.
+
+Monitoring services (Prometheus, Loki, Tempo, Grafana, etc.) are defined in `docker-compose.yaml` but commented out — they are deployed separately via Kubernetes. (You can uncomment them for local testing)
+
+### Running Tests
 
 ```bash
 make test
@@ -62,30 +76,6 @@ uv run pytest -v
 ```
 
 Tests use an in-memory SQLite database and a fresh schema per test session. No running server or database required.
-
-## Docker
-
-```bash
-# Start API + PostgreSQL
-docker compose up --build
-```
-
-The `api` service waits for the `db` service health check before starting. Database URL is injected via environment in `docker-compose.yaml`.
-
-Monitoring services (Prometheus, Loki, Tempo, Grafana, etc.) are defined in `docker-compose.yaml` but commented out — they are deployed separately via Kubernetes. See [docs/MONITORING.md](docs/MONITORING.md).
-
-## Make Targets
-
-```
-make up           Start the dev server with reload
-make down         Stop the dev server
-make test         Run the test suite with coverage
-make coverage     Run tests and generate HTML coverage report
-make quality      Run all pre-commit hooks
-make migrate      Generate a new Alembic revision (msg=<description>)
-make upgrade      Apply all pending migrations
-make downgrade    Roll back the last migration
-```
 
 ## Project Layout
 

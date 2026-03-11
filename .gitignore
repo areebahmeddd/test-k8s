@@ -3,6 +3,10 @@
 .env
 .env.local
 
+# SOPS age private key
+age.key
+k8s/argocd/sops-age-secret.yaml
+
 # Python
 __pycache__/
 *.py[cod]

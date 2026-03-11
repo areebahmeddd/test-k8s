@@ -3,6 +3,9 @@
 .env
 .env.local
 
+# SOPS age private key
+age.key
+
 # Git
 .git/
 .gitignore
@@ -44,11 +47,21 @@ Thumbs.db
 # Kubernetes manifests
 k8s/
 
+# Monitoring configs
+monitoring/
+
+# OPA policies
+policy/
+
+# GitHub Actions & tooling
+.github/
+.sops.yaml
+.conftest.yaml
+
 # Logs
 *.log
 
 # Docs & dev tooling
-docs/
 README.md
 Makefile
 docker-compose*.yaml

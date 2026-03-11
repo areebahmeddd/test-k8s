@@ -1,0 +1,76 @@
+name: Validate GitOps
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - "k8s/**"
+      - "monitoring/**"
+      - "policy/**"
+      - ".conftest.yaml"
+      - ".sops.yaml"
+      - "Makefile"
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - "k8s/**"
+      - "monitoring/**"
+      - "policy/**"
+      - ".conftest.yaml"
+      - ".sops.yaml"
+      - "Makefile"
+  workflow_dispatch:
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KUBECTL_VERSION: "v1.34.0"
+  KUSTOMIZE_VERSION: "v5.7.0"
+  KUBECONFORM_VERSION: "v0.7.0"
+  CONFTEST_VERSION: "v0.66.0"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Install kustomize
+        run: |
+          curl -sLO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${{ env.KUSTOMIZE_VERSION }}/kustomize_${{ env.KUSTOMIZE_VERSION }}_linux_amd64.tar.gz"
+          tar -xzf kustomize_${{ env.KUSTOMIZE_VERSION }}_linux_amd64.tar.gz
+          sudo mv kustomize /usr/local/bin/kustomize
+
+      - name: Install kubeconform
+        run: |
+          curl -sLO "https://github.com/yannh/kubeconform/releases/download/${{ env.KUBECONFORM_VERSION }}/kubeconform-linux-amd64.tar.gz"
+          tar -xzf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
+      - name: Install conftest
+        run: |
+          curl -sLO "https://github.com/open-policy-agent/conftest/releases/download/${{ env.CONFTEST_VERSION }}/conftest_${CONFTEST_VERSION#v}_Linux_x86_64.tar.gz"
+          tar -xzf conftest_${CONFTEST_VERSION#v}_Linux_x86_64.tar.gz
+          sudo mv conftest /usr/local/bin/conftest
+        env:
+          CONFTEST_VERSION: ${{ env.CONFTEST_VERSION }}
+
+      - name: Validate manifests (client-side dry-run)
+        run: make validate-k8s
+
+      - name: Validate schemas (kubeconform)
+        run: make validate-schema
+
+      - name: Verify prod secrets are SOPS-encrypted
+        run: make validate-sops
+
+      - name: Validate OPA policies (conftest)
+        run: make validate-policies

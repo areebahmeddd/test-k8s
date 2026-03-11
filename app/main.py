@@ -43,8 +43,6 @@ app.include_router(api_v1_router)
 
 Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
-app.mount("/", StaticFiles(directory="docs", html=True), name="ui")
-
 
 @app.get("/health", tags=["system"], status_code=status.HTTP_200_OK)
 async def health() -> JSONResponse:
@@ -52,3 +50,6 @@ async def health() -> JSONResponse:
     return JSONResponse(
         content={"status": "ok", "version": settings.version},
     )
+
+
+app.mount("/", StaticFiles(directory="docs", html=True), name="ui")

@@ -1,0 +1,59 @@
+name: Code Quality and Testing
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "alembic/**"
+      - "alembic.ini"
+      - "pyproject.toml"
+      - "uv.lock"
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - "app/**"
+      - "tests/**"
+      - "alembic/**"
+      - "alembic.ini"
+      - "pyproject.toml"
+      - "uv.lock"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  UV_VERSION: "0.10.5"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run lint
+        run: uv run ruff check app/
+
+      - name: Run format check
+        run: uv run ruff format --check app/
+
+      - name: Run tests
+        run: uv run pytest -v --cov=app --cov-report=term-missing
