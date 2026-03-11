@@ -1,6 +1,6 @@
 ---
-name: REST API Design
-description: "Use when designing new API endpoints, reviewing existing routes, creating request/response schemas, handling errors consistently, planning API versioning, or evaluating REST conventions. Triggers on: new endpoint, API design, REST, route, schema, status code, error handling, request model, response model, FastAPI route, versioning."
+paths:
+  - "app/api/**"
 ---
 
 # FastAPI REST API Design

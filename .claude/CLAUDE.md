@@ -32,21 +32,21 @@
 
 ## Available Customizations
 
-**Agents** (`.github/agents/`) — invoke by name for specialized modes:
+**Agents** (`.claude/skills/`) — invoke by name for specialized modes:
 
 - `architect` — system design, ADRs, component diagrams, technology tradeoffs
 - `reviewer` — adversarial security/correctness/performance review before merging
 
-**Instructions** (`.github/instructions/`) — auto-applied per file type:
+**Rules** (`.claude/rules/`) — auto-applied per file type:
 
-- `python.instructions.md` → all `**/*.py` files
-- `kubernetes.instructions.md` → all `k8s/**` files
-- `docker.instructions.md` → Dockerfiles and docker-compose files
-- `github-actions.instructions.md` → `.github/workflows/**` files
-- `testing.instructions.md` → `tests/**` and `conftest.py`
-- `api-design.instructions.md` → `app/api/**` files
+- `python.md` → all `**/*.py` files
+- `kubernetes.md` → all `k8s/**` files
+- `docker.md` → Dockerfiles and docker-compose files
+- `github-actions.md` → `.github/workflows/**` files
+- `testing.md` → `tests/**` and `conftest.py`
+- `api-design.md` → `app/api/**` files
 
-**Skills** (`.github/skills/`) — invoke by name for focused guidance:
+**Skills** (`.claude/skills/`) — invoke by name for focused guidance:
 
 - `brand-guidelines` — color tokens, typography scale, design system, visual consistency
 - `clean-code` — naming, Clean Code principles, code smells, function size

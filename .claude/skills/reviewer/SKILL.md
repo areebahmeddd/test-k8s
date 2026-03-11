@@ -1,12 +1,10 @@
 ---
 name: reviewer
 description: "Adversarial code reviewer focused on security vulnerabilities, correctness bugs, performance cliffs, test coverage gaps, and dead code. Use before merging code, before a release, or when you suspect a security issue. Triggers on: review this code, security check, find bugs, is this safe, code audit, pre-merge review, OWASP check, what's wrong with this, missing authorization, SQL injection check, dead code, unused imports, unused deps, unreachable code, cleanup codebase."
+argument-hint: "Paste the code, file path, or PR to review"
+context: fork
+agent: Explore
 model: claude-sonnet-4-6
-tools:
-  - read_file
-  - file_search
-  - grep_search
-  - semantic_search
 ---
 
 # Adversarial Code Reviewer

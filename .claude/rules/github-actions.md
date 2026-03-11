@@ -1,7 +1,6 @@
 ---
-name: GitHub Actions Best Practices
-description: "Use when writing or reviewing GitHub Actions workflow YAML files. Covers security hardening, permission scoping, concurrency groups, dependency caching, secret handling, and CI/CD pipeline structure."
-applyTo: ".github/workflows/**"
+paths:
+  - ".github/workflows/**"
 ---
 
 # GitHub Actions Best Practices

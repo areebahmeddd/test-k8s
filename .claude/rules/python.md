@@ -1,7 +1,6 @@
 ---
-name: Python Standards
-description: "Use when writing, reviewing, or refactoring Python code. Enforces Python 3.11+ type hints, Pydantic v2 patterns, async/await correctness, Ruff compliance, and pytest conventions for this project."
-applyTo: "**/*.py"
+paths:
+  - "**/*.py"
 ---
 
 # Python Standards (Python 3.11 · uv · Ruff · Pydantic v2)

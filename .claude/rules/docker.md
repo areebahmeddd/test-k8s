@@ -1,7 +1,9 @@
 ---
-name: Docker Best Practices
-description: "Use when writing or reviewing Dockerfiles or docker-compose files. Covers multi-stage builds, layer caching optimization, non-root user, image pinning, .dockerignore, and security hardening."
-applyTo: "{Dockerfile,Dockerfile.*,docker-compose.yaml,docker-compose.yml,docker-compose*.yaml,docker-compose*.yml}"
+paths:
+  - "Dockerfile"
+  - "Dockerfile.*"
+  - "docker-compose*.yaml"
+  - "docker-compose*.yml"
 ---
 
 # Docker Best Practices

@@ -1,6 +1,7 @@
 ---
-name: Testing Standards
-description: "Use when writing tests, reviewing test coverage, designing test fixtures, fixing flaky tests, deciding what to test, or structuring pytest suites. Covers test naming, async testing, fixture design, parametrize patterns, integration vs unit split, and what NOT to test. Triggers on: write a test, test this function, how do I test, improve test coverage, fix flaky test, add integration test, unit test."
+paths:
+  - "tests/**"
+  - "conftest.py"
 ---
 
 # Testing Standards (pytest · httpx · AsyncClient)
@@ -31,7 +32,7 @@ Never mix concerns: a "unit" test that requires a database is an integration tes
 ```python
 # Import the transport wrapper — app= kwarg was removed in httpx 0.20
 from httpx import AsyncClient, ASGITransport
-from collections.abc import AsyncGenerator  # built-in generic, not typing.
+from collections.abc import AsyncGenerator  # built-in generic, not typing.AsyncGenerator
 
 # Use yield for teardown — clean and explicit
 @pytest.fixture

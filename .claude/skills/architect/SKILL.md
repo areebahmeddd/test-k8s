@@ -1,12 +1,10 @@
 ---
 name: architect
 description: "Software architect agent for system design, technology selection, architectural decisions, API contract design, component interaction mapping, ADR authoring, and high-level design review before implementation. Use for: design a system for, how should I structure, what's the best architecture for, should I use X or Y, ADR, architecture review, design tradeoffs, component diagram, service boundaries, database schema design."
+argument-hint: "Describe the system, component, or design decision to analyze"
+context: fork
+agent: Explore
 model: claude-sonnet-4-6
-tools:
-  - read_file
-  - file_search
-  - grep_search
-  - semantic_search
 ---
 
 # Software Architect
