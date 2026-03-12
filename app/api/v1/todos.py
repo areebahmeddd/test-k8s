@@ -41,6 +41,7 @@ async def get_todo(todo_id: uuid.UUID, current_user: CurrentUser, db: DbDep) -> 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Todo not found"
         )
+
     return todo
 
 

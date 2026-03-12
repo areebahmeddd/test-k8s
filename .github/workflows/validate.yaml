@@ -38,11 +38,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: ${{ env.KUBECTL_VERSION }}
-
       - name: Install kustomize
         run: |
           curl -sLO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${{ env.KUSTOMIZE_VERSION }}/kustomize_${{ env.KUSTOMIZE_VERSION }}_linux_amd64.tar.gz"
@@ -60,17 +55,15 @@ jobs:
           curl -sLO "https://github.com/open-policy-agent/conftest/releases/download/${{ env.CONFTEST_VERSION }}/conftest_${CONFTEST_VERSION#v}_Linux_x86_64.tar.gz"
           tar -xzf conftest_${CONFTEST_VERSION#v}_Linux_x86_64.tar.gz
           sudo mv conftest /usr/local/bin/conftest
-        env:
-          CONFTEST_VERSION: ${{ env.CONFTEST_VERSION }}
 
-      - name: Validate manifests (client-side dry-run)
+      - name: Validate manifests
         run: make validate-k8s
 
-      - name: Validate schemas (kubeconform)
+      - name: Validate schemas
         run: make validate-schema
 
       - name: Verify prod secrets are SOPS-encrypted
         run: make validate-sops
 
-      - name: Validate OPA policies (conftest)
+      - name: Validate OPA policies
         run: make validate-policies

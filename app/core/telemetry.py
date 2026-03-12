@@ -17,6 +17,7 @@ def setup_logging() -> None:
     handler.setFormatter(
         JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s")
     )
+
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(logging.INFO)

@@ -5,3 +5,6 @@
 *.png binary
 *.jpg binary
 *.jpeg binary
+
+# Exclude python files from language statistics
+*.py linguist-detectable=false

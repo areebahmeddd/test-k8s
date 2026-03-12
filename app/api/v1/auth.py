@@ -100,6 +100,7 @@ async def refresh_tokens(payload: RefreshRequest, db: DbDep) -> Token:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
         )
+
     expires_at = stored.expires_at
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=UTC)
@@ -137,6 +138,7 @@ async def logout(payload: LogoutRequest, current_user: CurrentUser, db: DbDep) -
         )
     )
     stored = result.scalar_one_or_none()
+
     if stored and not stored.revoked:
         stored.revoked = True
         await db.commit()

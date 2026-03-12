@@ -9,6 +9,11 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: check-json
       - id: check-yaml
+        exclude: ^k8s/
+      - id: check-yaml
+        name: check-yaml (multi-document k8s manifests)
+        args: [--allow-multiple-documents]
+        files: ^k8s/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.0
