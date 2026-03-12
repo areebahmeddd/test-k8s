@@ -1,0 +1,92 @@
+---
+globs: "{tests/**,conftest.py}"
+---
+
+# Testing Standards (pytest · httpx · AsyncClient)
+
+## Test Naming Convention
+
+```python
+# Pattern: test_<feature>_<scenario>_<expected_result>
+def test_create_todo_with_valid_data_returns_201(): ...
+def test_create_todo_with_missing_title_returns_422(): ...
+def test_get_todo_when_not_found_returns_404(): ...
+def test_update_todo_when_not_owner_returns_403(): ...
+```
+
+## Test Organization
+
+| Where                | What                                        | Rules                                |
+| -------------------- | ------------------------------------------- | ------------------------------------ |
+| `tests/unit/`        | Pure logic, utils, security functions       | No I/O, no network, no database      |
+| `tests/integration/` | API endpoints (full request/response cycle) | Uses test database, real HTTP client |
+
+Never mix concerns: a "unit" test that requires a database is an integration test.
+
+## Fixtures
+
+```python
+from httpx import AsyncClient, ASGITransport
+from collections.abc import AsyncGenerator
+
+@pytest.fixture
+async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as c:
+        yield c
+
+@pytest.fixture(scope="session")   # database setup — expensive
+@pytest.fixture(scope="module")    # schema setup — medium cost
+@pytest.fixture                    # default function scope — cheap, isolated
+```
+
+Configure `asyncio_mode = "auto"` in `pyproject.toml`:
+
+```toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+```
+
+- Never share mutable state between tests — tests must be order-independent
+- Use `conftest.py` for shared fixtures; keep test-file-specific fixtures in the test file
+
+## Async Tests
+
+With `asyncio_mode = "auto"`, no decorator needed:
+
+```python
+async def test_create_todo_returns_created_resource(
+    client: AsyncClient,
+    auth_headers: dict[str, str],
+) -> None:
+    response = await client.post(
+        "/api/v1/todos/",
+        json={"title": "Buy milk", "description": None},
+        headers=auth_headers,
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["title"] == "Buy milk"
+    assert data["completed"] is False
+```
+
+## Assertions
+
+- Assert the contract (response shape, status code, state change), not the implementation
+- One logical concern per test
+- Use specific assertions: `assert response.status_code == 201` not `assert response.ok`
+- Test 404/422/403 paths as deliberately as the happy path
+
+## Parametrize Repetitive Cases
+
+```python
+@pytest.mark.parametrize("title,expected_status", [
+    ("Buy milk", 201),
+    ("", 422),
+    ("a" * 300, 422),
+])
+async def test_create_todo_title_validation(
+    client: AsyncClient, title: str, expected_status: int
+) -> None: ...
+```

@@ -1,0 +1,93 @@
+---
+globs: "k8s/**"
+---
+
+# Kubernetes Best Practices
+
+## Resource Requests and Limits (Required on Every Container)
+
+```yaml
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+```
+
+- Never set limits without requests
+- Never omit both — pods are evicted first under node pressure
+- Set memory limit close to request (loose limits waste node capacity)
+- CPU limits cause throttling — be generous or omit CPU limit if latency matters
+
+## Health Probes (Required)
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  failureThreshold: 30
+  periodSeconds: 10
+```
+
+## Security Context (Required)
+
+```yaml
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: ["ALL"]
+```
+
+If the app needs a writable directory, add a `tmpfs` volume:
+
+```yaml
+volumes:
+  - name: tmp
+    emptyDir: {}
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+```
+
+## Required Labels on All Resources
+
+```yaml
+labels:
+  app.kubernetes.io/name: todo-api
+  app.kubernetes.io/instance: todo-api-dev
+  app.kubernetes.io/component: api
+  app.kubernetes.io/version: "1.2.3"
+  app.kubernetes.io/managed-by: kustomize
+```
+
+## Kustomize Conventions (this project)
+
+- Base manifests: `k8s/base/` — no env-specific values
+- Env patches: `k8s/overlays/dev/` and `k8s/overlays/prod/`
+- Image tag overrides: use `images:` transformer in overlay `kustomization.yaml`
+- Secrets: never commit to Git — use external-secrets operator or `.env` in `.gitignore`
+- `namePrefix` / `nameSuffix` to namespace resource names between envs
