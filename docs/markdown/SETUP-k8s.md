@@ -191,8 +191,14 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 Change it after first login:
 
 ```bash
-argocd login argocd.localhost --username admin --insecure
+argocd login argocd.localhost:80 --username admin --insecure
 argocd account update-password
+```
+
+Then delete the auto-generated secret — it is no longer needed and should not remain in the cluster:
+
+```bash
+kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
 
 ## Autoscaling (prod only)
