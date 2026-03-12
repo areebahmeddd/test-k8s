@@ -1,0 +1,31 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+  - role: control-plane
+    # Stamp this node with ingress-ready=true so the Traefik pod's nodeSelector
+    # can pin it here — required because extraPortMappings only forward traffic
+    # to the node whose pod has a matching hostPort binding.
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    # Map host loopback → container ports for Traefik's hostPort.
+    # listenAddress: 127.0.0.1 restricts to loopback only — not exposed on LAN.
+    # All *.localhost domains route through port 80 (same as minikube tunnel).
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        listenAddress: "127.0.0.1"
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        listenAddress: "127.0.0.1"
+        protocol: TCP
+
+# Explicit subnets — avoids conflicts with common home/office network ranges.
+networking:
+  podSubnet: "10.244.0.0/16"
+  serviceSubnet: "10.96.0.0/12"

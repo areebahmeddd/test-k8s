@@ -1,0 +1,27 @@
+# Documentation: https://conftest.dev
+
+# Policy directory
+policy: policy
+
+# Namespaces to search for deny and warn rules
+namespace:
+  - kubernetes.resources.limits
+  - kubernetes.practices.health
+  - kubernetes.practices.images
+  - kubernetes.practices.labels
+  - kubernetes.security.network
+
+# Output format (options: stdout, json, tap, table, junit, github)
+output: table
+
+# Evaluate each manifest document independently (required when piping stdin)
+combine: false
+
+# Fail on warnings (strict enforcement)
+fail-on-warn: true
+
+# Show successes (noisy in CI)
+successes: false
+
+# Trace output (useful for debugging policies)
+trace: false

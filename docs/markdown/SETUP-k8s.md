@@ -3,131 +3,197 @@
 ## Prerequisites
 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) — Kubernetes CLI
-- [kind](https://kind.sigs.k8s.io/) — local cluster via Docker
+- [minikube](https://minikube.sigs.k8s.io/docs/start/) — local single-node cluster
 - [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) — manifest templating
 - [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) — secret encryption
-- Docker — to build the API image and run kind nodes
+- Docker — to build the API image
 
 ## Cluster Layout
 
-Two namespaces, no cross-namespace network policies:
+Four namespaces:
 
 | Namespace    | What lives there                                                                        |
 | ------------ | --------------------------------------------------------------------------------------- |
+| `argocd`     | ArgoCD server, application controller, repo server, dex, redis                          |
+| `traefik`    | Traefik ingress controller (LoadBalancer service)                                       |
 | `todo-app`   | `todo-api` Deployment + HPA, `todo-db` StatefulSet, Services, ConfigMap, ServiceAccount |
 | `monitoring` | Prometheus, Alertmanager, Grafana, Loki, Promtail, Tempo, OTel Collector                |
 
 Two Kustomize overlays share the same base:
 
-```
+```text
 k8s/
   base/
     app/          namespace + all todo-app resources
     monitoring/   namespace + all monitoring resources
+    traefik/      namespace + traefik deployment and service
   overlays/
-    dev/          NodePort patches, plaintext secrets
-    prod/         imagePullPolicy patch, HPA, SOPS-encrypted secrets
+    dev/          replica/resource patches, SOPS-encrypted secrets
+    prod/         imagePullPolicy Always, HPA, SOPS-encrypted secrets
 ```
 
 ## Overlay Differences
 
-|                            | `dev`                            | `prod`                  |
-| -------------------------- | -------------------------------- | ----------------------- |
-| Service access             | NodePort (30800 / 30300 / 30090) | ClusterIP only          |
-| `todo-api` replicas        | 1 (static)                       | 2–4 via HPA             |
-| `todo-api` imagePullPolicy | `IfNotPresent`                   | `Always`                |
-| Secrets                    | Plaintext YAML                   | SOPS-encrypted with age |
+|                            | `dev`          | `prod`         |
+| -------------------------- | -------------- | -------------- |
+| `todo-api` replicas        | 1 (static)     | 2–4 via HPA    |
+| `todo-api` imagePullPolicy | `IfNotPresent` | `Always`       |
+| Secrets                    | SOPS-encrypted | SOPS-encrypted |
 
 ## Quick Start
 
 ### 1. Create the local cluster
 
 ```bash
-make kind-create
+make minikube-create
 ```
 
-### 2. Build and load the API image
+### 2. Build the API image
 
 ```bash
-docker build -t todo-api:latest .
-make k8s-build          # kind load docker-image todo-api:latest --name todo-k8s
+make k8s-build
 ```
 
-### 3. Deploy
+### 3. Load all images into minikube
+
+minikube runs its own internal Docker daemon — images on your host are not visible inside the cluster without loading them explicitly.
 
 ```bash
-make k8s-deploy         # deploys the dev overlay by default
+make minikube-load
+```
+
+### 4. Set the AGE private key
+
+SOPS uses your AGE private key to decrypt secrets at deploy time. The key lives on your machine (never in the cluster) and is only needed when running `sops -d` locally.
+
+```powershell
+$env:SOPS_AGE_KEY_FILE = "$(Get-Location)\age.key"   # PowerShell
+```
+
+```bash
+export SOPS_AGE_KEY_FILE="$(pwd)/age.key"             # bash / zsh
+```
+
+### 5. Deploy
+
+```bash
+make k8s-deploy              # ArgoCD + dev overlay + secrets
 make k8s-deploy OVERLAY=prod
 ```
 
-### 4. Verify
+What `k8s-deploy` does in order:
+
+1. Applies ArgoCD twice with `--server-side` — first pass registers CRDs, second pass applies the `Application` resources that depend on those CRDs.
+2. Renders the overlay with `kustomize build` and pipes it to `kubectl apply`.
+3. Decrypts each secret file with `sops -d` and applies it directly — plaintext never touches disk.
+
+### 6. Enable `*.localhost` routing
+
+> **Dev overlay only** — this step is specific to minikube. A prod cluster with a real domain and DNS does not need it.
+
+#### 6a. Add hosts file entries
+
+Each `*.localhost` hostname must resolve to `127.0.0.1` on your machine. Add the following block to your hosts file if it is not already there:
+
+```text
+127.0.0.1  todo.localhost
+127.0.0.1  argocd.localhost
+127.0.0.1  grafana.localhost
+127.0.0.1  prometheus.localhost
+127.0.0.1  traefik.localhost
+```
+
+| OS      | Hosts file path                         |
+| ------- | --------------------------------------- |
+| Windows | `C:\Windows\System32\drivers\etc\hosts` |
+| macOS   | `/etc/hosts`                            |
+| Linux   | `/etc/hosts`                            |
+
+On Windows, open your editor as **Administrator** before editing the file.
+
+#### 6b. Start minikube tunnel
+
+Traefik is a `LoadBalancer` service. In minikube, `LoadBalancer` services have `EXTERNAL-IP: <pending>` by default. `minikube tunnel` assigns `127.0.0.1` as the external IP so all `*.localhost` hostnames route through Traefik on port 80.
+
+Run this **once in a dedicated elevated window and leave it open**:
+
+```powershell
+# PowerShell — accepts a UAC prompt
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "minikube tunnel" -Verb RunAs
+```
+
+```bash
+# bash
+sudo minikube tunnel
+```
+
+Confirm it worked:
+
+```bash
+kubectl get svc -n traefik
+# EXTERNAL-IP should show 127.0.0.1, not <pending>
+```
+
+### 7. Verify
 
 ```bash
 make k8s-status
-# kubectl get all -n todo-app
-# kubectl get all -n monitoring
 ```
 
-### 5. Access services (dev)
+| Service    | URL                                   | Credentials      |
+| ---------- | ------------------------------------- | ---------------- |
+| todo-api   | `http://todo.localhost`               | —                |
+| ArgoCD     | `http://argocd.localhost`             | admin / admin123 |
+| Grafana    | `http://grafana.localhost`            | admin / admin123 |
+| Prometheus | `http://prometheus.localhost`         | —                |
+| Traefik    | `http://traefik.localhost/dashboard/` | —                |
 
-NodePort is preconfigured — services are reachable directly:
-
-| Service    | URL                    |
-| ---------- | ---------------------- |
-| todo-api   | http://localhost:30800 |
-| Grafana    | http://localhost:30300 |
-| Prometheus | http://localhost:30090 |
-
-Or use port-forward (works in both dev and prod):
+### 8. Tear down
 
 ```bash
-make k8s-pf
-# todo-api  → localhost:8000
-# Grafana   → localhost:3000
-# Prometheus → localhost:9090
-```
-
-### 6. Tear down
-
-```bash
-make k8s-delete         # remove deployed resources
-make kind-delete        # destroy the cluster
+make k8s-delete          # remove all deployed resources
+make minikube-delete     # destroy the cluster
 ```
 
 ## Secrets
 
-### Dev
+All secrets in both overlays are SOPS-encrypted with age. The AGE public key is committed in `.sops.yaml`. The private key (`age.key`) must never be committed.
 
-Secrets are plaintext YAML files committed to the repository for local convenience:
-
-```
-k8s/overlays/dev/secrets/
-  todo-api-secret.yaml      DATABASE_URL, SECRET_KEY
-  todo-db-secret.yaml       POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-  grafana-secret.yaml       ADMIN_USER, ADMIN_PASSWORD
-  alertmanager-secret.yaml  SLACK_WEBHOOK_URL
+```text
+k8s/overlays/dev/secrets/           k8s/overlays/prod/secrets/
+  todo-api-secret.yaml                todo-api-secret.yaml
+  todo-db-secret.yaml                 todo-db-secret.yaml
+  grafana-secret.yaml                 grafana-secret.yaml
+  alertmanager-secret.yaml            alertmanager-secret.yaml
 ```
 
-### Prod
-
-All prod secrets are SOPS-encrypted with age. The public key is committed in `.sops.yaml`. The private key must never be committed.
+Each file holds `stringData` fields encrypted with `ENC[AES256_GCM,...]`. Running `sops -d <file>` decrypts it in memory — nothing is written to disk.
 
 ```bash
-# Encrypt a secret in-place
-sops --encrypt --in-place k8s/overlays/prod/secrets/<file>.yaml
+# Update a single field in an encrypted file (no full decrypt needed)
+sops --set '["stringData"]["ADMIN_PASSWORD"] "newvalue"' k8s/overlays/dev/secrets/grafana-secret.yaml
 
-# Edit an already-encrypted secret
-sops k8s/overlays/prod/secrets/<file>.yaml
+# Open an encrypted file in your editor
+sops k8s/overlays/dev/secrets/grafana-secret.yaml
 ```
 
-To deploy prod, make the private key available:
+## ArgoCD
+
+ArgoCD is configured to run in HTTP mode (`server.insecure: "true"` in `argocd-cmd-params-cm`) so the plain-HTTP Traefik Ingress can route to it without TLS passthrough. In production with a real domain you would remove that patch and terminate TLS at Traefik with cert-manager instead.
+
+The initial admin password is auto-generated on first install and stored in a cluster Secret:
 
 ```bash
-export SOPS_AGE_KEY_FILE=age.key
-make k8s-deploy OVERLAY=prod
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d
 ```
 
-SOPS decrypts secrets at deploy time. No plaintext ever reaches the cluster manifest pipeline.
+Change it after first login:
+
+```bash
+argocd login argocd.localhost --username admin --insecure
+argocd account update-password
+```
 
 ## Autoscaling (prod only)
 
@@ -144,8 +210,8 @@ The Deployment `spec.replicas` field is intentionally absent from the prod overl
 ```bash
 make validate           # runs all four checks below in sequence
 
-make validate-k8s       # kubectl dry-run against rendered dev manifests
-make validate-sops      # verifies all prod secrets are SOPS-encrypted
+make validate-k8s       # kustomize build dry-run against dev overlay
+make validate-sops      # verifies all secrets are SOPS-encrypted
 make validate-schema    # kubeconform schema validation
 make validate-policies  # OPA/conftest policy checks (resource limits, labels, image tags, probes)
 ```
@@ -181,4 +247,37 @@ kubectl logs -n monitoring deploy/prometheus --tail=50
 
 See [MONITORING.md](MONITORING.md) for the full observability stack documentation — signal flow, configuration, alert rules, and Grafana dashboards.
 
-The Kubernetes stack uses the same services and configuration as Docker Compose. The only difference is that configuration files are stored in ConfigMaps (under `k8s/base/monitoring/`) instead of bind-mounted from `monitoring/`.
+Configuration files are stored in ConfigMaps under `k8s/base/monitoring/` and loaded into pods as volume mounts, equivalent to the bind mounts used in the Docker Compose setup.
+
+## Resource Usage
+
+All resource requests and limits are declared in `k8s/base/`. The dev overlay does not override them — these figures apply to both overlays.
+
+**Totals across all pods (single replica each):**
+
+- CPU requests: `800m` · CPU limits: `3000m`
+- Memory requests: `2112Mi (~2.1 GiB)` · Memory limits: `4736Mi (~4.6 GiB)`
+
+### Per-container breakdown
+
+| Component        | Namespace    | CPU Request | Mem Request | CPU Limit | Mem Limit |
+| ---------------- | ------------ | ----------- | ----------- | --------- | --------- |
+| `todo-api`       | `todo-app`   | 100m        | 256Mi       | 500m      | 512Mi     |
+| `todo-db`        | `todo-app`   | 250m        | 512Mi       | 500m      | 1Gi       |
+| `traefik`        | `traefik`    | 100m        | 64Mi        | 500m      | 128Mi     |
+| `prometheus`     | `monitoring` | 100m        | 512Mi       | 500m      | 1Gi       |
+| `grafana`        | `monitoring` | 50m         | 128Mi       | 200m      | 512Mi     |
+| `loki`           | `monitoring` | 50m         | 256Mi       | 200m      | 512Mi     |
+| `tempo`          | `monitoring` | 50m         | 128Mi       | 200m      | 512Mi     |
+| `otel-collector` | `monitoring` | 50m         | 128Mi       | 200m      | 256Mi     |
+| `alertmanager`   | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
+| `promtail`       | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
+
+> ArgoCD system pods (`argocd-server`, `application-controller`, `repo-server`, `dex`, `redis`) do not declare resource limits in this project — they use ArgoCD's upstream defaults.
+
+### Recommended host resources
+
+| Local cluster | Min RAM | Min CPU | Notes                                            |
+| ------------- | ------- | ------- | ------------------------------------------------ |
+| minikube      | 8 GiB   | 4 cores | Matches `make minikube-create` flags             |
+| kind          | 6 GiB   | 2 cores | No separate VM overhead — Docker containers only |
