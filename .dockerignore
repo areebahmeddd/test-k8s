@@ -62,6 +62,7 @@ policy/
 *.log
 
 # Docs & dev tooling
+docs/markdown/
 README.md
 Makefile
 docker-compose*.yaml

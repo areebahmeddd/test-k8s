@@ -5,7 +5,7 @@ namespace: argocd
 
 resources:
   - namespace.yaml
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.3/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.0/manifests/install.yaml
   - sops-age-secret.yaml
   - argocd-server-ingress.yaml
   - applications/todo-app-dev.yaml
@@ -18,9 +18,12 @@ patches:
       kind: ConfigMap
       name: argocd-cmd-params-cm
     patch: |-
-      - op: add
-        path: /data/server.insecure
-        value: "true"
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-cmd-params-cm
+      data:
+        server.insecure: "true"
 
   - target:
       kind: Deployment

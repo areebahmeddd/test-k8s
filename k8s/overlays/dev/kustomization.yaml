@@ -5,7 +5,8 @@ resources:
   - ../../base/app
   - ../../base/monitoring
   - ../../base/traefik
-  - secrets/todo-api-secret.yaml
-  - secrets/todo-db-secret.yaml
-  - secrets/grafana-secret.yaml
-  - secrets/alertmanager-secret.yaml
+  # Secrets are excluded here — applied separately via: sops -d <file> | kubectl apply -f -
+  # - secrets/todo-api-secret.yaml
+  # - secrets/todo-db-secret.yaml
+  # - secrets/grafana-secret.yaml
+  # - secrets/alertmanager-secret.yaml

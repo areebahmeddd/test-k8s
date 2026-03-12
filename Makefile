@@ -151,7 +151,7 @@ check-sops:
 sops-encrypt:
 	@for f in k8s/overlays/dev/secrets/*.yaml k8s/overlays/prod/secrets/*.yaml; do \
 		echo "Encrypting: $$f"; \
-		sops --encrypt --in-place $$f; \
+		sops --encrypt --in-place --indent 2 $$f; \
 	 done
 
 sops-decrypt:

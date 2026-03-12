@@ -6,5 +6,9 @@
 *.jpg binary
 *.jpeg binary
 
+# SOPS-encrypted secret files must be treated as binary — any byte-level
+# change (e.g. LF→CRLF on Windows checkout) breaks the SOPS MAC checksum.
+k8s/overlays/*/secrets/*.yaml binary
+
 # Exclude python files from language statistics
 *.py linguist-detectable=false
