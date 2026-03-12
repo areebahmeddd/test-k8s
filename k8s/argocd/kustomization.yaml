@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - namespace.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.3/manifests/install.yaml
+  - sops-age-secret.yaml
+  - argocd-server-ingress.yaml
+  - applications/todo-app-dev.yaml
+  - applications/todo-app-prod.yaml
+
+patches:
+  # Run argocd-server in HTTP mode so the Traefik Ingress can route to port 80
+  # without needing TLS passthrough or cert-manager.
+  - target:
+      kind: ConfigMap
+      name: argocd-cmd-params-cm
+    patch: |-
+      - op: add
+        path: /data/server.insecure
+        value: "true"
+
+  - target:
+      kind: Deployment
+      name: argocd-repo-server
+    patch: |-
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: sops-age
+          secret:
+            secretName: sops-age
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: sops-age
+          mountPath: /helm-secrets-private-keys
+          readOnly: true
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SOPS_AGE_KEY_FILE
+          value: /helm-secrets-private-keys/key.txt

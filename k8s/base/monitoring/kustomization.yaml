@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+  - namespace.yaml
+  # Collectors
+  - promtail/serviceaccount.yaml
+  - promtail/clusterrole.yaml
+  - promtail/clusterrolebinding.yaml
+  - promtail/configmap.yaml
+  - promtail/daemonset.yaml
+  - otel-collector/configmap.yaml
+  - otel-collector/deployment.yaml
+  - otel-collector/service.yaml
+  # Storage
+  - loki/configmap.yaml
+  - loki/deployment.yaml
+  - loki/service.yaml
+  - tempo/configmap.yaml
+  - tempo/deployment.yaml
+  - tempo/service.yaml
+  - prometheus/configmap.yaml
+  - prometheus/deployment.yaml
+  - prometheus/service.yaml
+  - prometheus/ingress.yaml
+  # Alerting
+  - alertmanager/deployment.yaml
+  - alertmanager/service.yaml
+  # Visualization
+  - grafana/configmap-datasources.yaml
+  - grafana/configmap-provisioning.yaml
+  - grafana/deployment.yaml
+  - grafana/service.yaml
+  - grafana/ingress.yaml
+
+configMapGenerator:
+  - name: grafana-dashboards
+    options:
+      disableNameSuffixHash: true
+    files:
+      - api-metrics.json=grafana/dashboards/api-metrics.json

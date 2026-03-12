@@ -11,7 +11,7 @@ route:
 receivers:
   - name: slack
     slack_configs:
-      - api_url: $SLACK_WEBHOOK_URL
+      - api_url: ${SLACK_WEBHOOK_URL}
         channel: "#alerts"
         send_resolved: true
         color: '{{ if eq .Status "firing" }}{{ if eq (index .Alerts 0).Labels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
