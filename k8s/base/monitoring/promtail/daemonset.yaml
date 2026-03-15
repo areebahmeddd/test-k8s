@@ -59,10 +59,9 @@ spec:
             periodSeconds: 10
             failureThreshold: 10
           livenessProbe:
-            httpGet:
-              path: /ready
+            tcpSocket:
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 10
             periodSeconds: 30
             failureThreshold: 5
           resources:
