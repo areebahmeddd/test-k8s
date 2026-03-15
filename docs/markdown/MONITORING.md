@@ -4,15 +4,14 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
 
 ## Stack Overview
 
-| Service        | Image                                          | Role                                    | Port |
-| -------------- | ---------------------------------------------- | --------------------------------------- | ---- |
-| Prometheus     | `prom/prometheus:v3.10.0`                      | Metrics collection and alerting         | 9090 |
-| Alertmanager   | `prom/alertmanager:v0.31.0`                    | Alert routing and notification delivery | 9093 |
-| Grafana        | `grafana/grafana:12.4.0`                       | Unified dashboard UI                    | 3000 |
-| Loki           | `grafana/loki:3.5.0`                           | Log storage and querying                | 3100 |
-| Promtail       | `grafana/promtail:3.5.0`                       | Log collection from Docker containers   | —    |
-| Tempo          | `grafana/tempo:2.8.0`                          | Trace storage and querying              | 3200 |
-| OTel Collector | `otel/opentelemetry-collector-contrib:0.147.0` | Trace ingestion gateway                 | 4317 |
+| Service      | Image                         | Role                                    | Port |
+| ------------ | ----------------------------- | --------------------------------------- | ---- |
+| Prometheus   | `prom/prometheus:v3.10.0`     | Metrics collection and alerting         | 9090 |
+| Alertmanager | `prom/alertmanager:v0.31.0`   | Alert routing and notification delivery | 9093 |
+| Grafana      | `grafana/grafana:12.4.0`      | Unified dashboard UI                    | 3000 |
+| Loki         | `grafana/loki:3.5.0`          | Log storage and querying                | 3100 |
+| Alloy        | `grafana/alloy:v1.14.0`       | Log collection and trace ingestion      | 4317 |
+| Tempo        | `grafana/tempo:2.8.0`         | Trace storage and querying              | 3200 |
 
 ## Signal Flow
 
@@ -30,48 +29,57 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
                       └────┬──────┘  └────▲────┘  └────▲───┘
                            │              │             │
                       fires │         push │        push │
-                      alerts│              │             │
-                      ┌─────▼──────┐  ┌───┴──────┐  ┌──┴──────────────┐
-                      │ALERTMANAGER│  │ PROMTAIL │  │ OTEL-COLLECTOR  │
-                      │  :9093     │  │ (no port)│  │   :4317         │
-                      └────────────┘  └──────────┘  └────────────────┬┘
-                                          scrapes                     │ receives
-                                     docker socket               ┌────▼────┐
-                                          (all containers)       │   API   │
-                                                                  │  :8000  │
-                                                        scrapes ──┤         │
-                                                      (prometheus)└─────────┘
+                      alerts│         logs │      traces │
+                      ┌─────▼──────┐  ┌───┴─────────────┴──┐
+                      │ALERTMANAGER│  │        ALLOY        │
+                      │  :9093     │  │  logs  :—  otlp :4317│
+                      └────────────┘  └──────────┬──────────┘
+                                                  │ receives traces
+                                             ┌────▼────┐
+                                             │   API   │
+                                             │  :8000  │
+                                             └─────────┘
 ```
 
-The API is the sole source of signals. It does not know about Prometheus or Promtail — both collect passively. It actively pushes traces to the OTel Collector via the OpenTelemetry SDK.
+Alloy collects logs from all Kubernetes pods via the Kubernetes API (`loki.source.kubernetes`) and receives traces from the API over gRPC OTLP (port 4317). It requires no node filesystem access and runs as a single Deployment.
 
 ## Configuration Files
 
-All configuration lives under `monitoring/`.
+All configuration lives under `k8s/base/monitoring/`.
 
 ```
-monitoring/
-  alertmanager/
-    alertmanager.yml
+k8s/base/monitoring/
+  alloy/
+    configmap.yaml       # River (Alloy) pipeline config
+    deployment.yaml
+    service.yaml
+    clusterrole.yaml
+    clusterrolebinding.yaml
+    serviceaccount.yaml
   grafana/
-    provisioning/
-      dashboards/
-        dashboards.yml
-      datasources/
-        datasources.yml
+    configmap-datasources.yaml
+    configmap-provisioning.yaml
     dashboards/
       api-metrics.json
+    deployment.yaml
+    service.yaml
+    ingress.yaml
   loki/
-    loki-config.yml
-  otel-collector/
-    otel-collector-config.yml
-  promtail/
-    promtail-config.yml
+    configmap.yaml
+    deployment.yaml
+    service.yaml
   prometheus/
-    prometheus.yml
-    alert-rules.yml
+    configmap.yaml       # prometheus.yml + alert-rules.yml
+    deployment.yaml
+    service.yaml
+    ingress.yaml
+  alertmanager/
+    deployment.yaml
+    service.yaml
   tempo/
-    tempo-config.yml
+    configmap.yaml
+    deployment.yaml
+    service.yaml
 ```
 
 ## Prometheus
@@ -214,55 +222,67 @@ schema_config:
 
 `replication_factor: 1` and `store: inmemory` are correct for a single-instance deployment. No external Consul or etcd is needed.
 
-## Promtail
+## Alloy
 
-**Config:** `monitoring/promtail/promtail-config.yml`
+**Config:** `k8s/base/monitoring/alloy/configmap.yaml` (key: `config.alloy`)
 
-```yaml
-server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
-  log_level: warn
+Alloy uses the River configuration language. The pipeline has two independent signal paths:
 
-positions:
-  filename: /tmp/positions.yaml
+### Logs pipeline
 
-clients:
-  - url: http://loki:3100/loki/api/v1/push
+```alloy
+discovery.kubernetes "pod" {
+  role = "pod"
+}
 
-scrape_configs:
-  - job_name: docker
-    docker_sd_configs:
-      - host: unix:///var/run/docker.sock
-        refresh_interval: 5s
-    relabel_configs:
-      - source_labels: [__meta_docker_container_name]
-        regex: "/(.*)"
-        target_label: container
-      - source_labels:
-          [__meta_docker_container_label_com_docker_compose_service]
-        target_label: service
-      - source_labels: [__meta_docker_container_log_stream]
-        target_label: stream
+discovery.relabel "pod_logs" {
+  targets = discovery.kubernetes.pod.targets
+
+  rule { source_labels = ["__meta_kubernetes_namespace"]            target_label = "namespace" }
+  rule { source_labels = ["__meta_kubernetes_pod_name"]             target_label = "pod" }
+  rule { source_labels = ["__meta_kubernetes_pod_container_name"]   target_label = "container" }
+  rule { source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"] target_label = "app" }
+  rule {
+    source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+    target_label  = "job"
+    separator     = "/"
+  }
+}
+
+loki.source.kubernetes "pod_logs" {
+  targets    = discovery.relabel.pod_logs.output
+  forward_to = [loki.write.loki.receiver]
+}
+
+loki.write "loki" {
+  endpoint { url = "http://loki:3100/loki/api/v1/push" }
+}
 ```
 
-Promtail watches all running Docker containers via the Docker socket and pushes their stdout/stderr to Loki. No changes to the application are needed — logs just go to stdout as normal.
+`loki.source.kubernetes` tails pod logs via the Kubernetes API — no DaemonSet, no `hostPath` mounts, and no privileged container required. A single Alloy Deployment serves the whole cluster.
 
-`positions.yaml` tracks the read offset for each log stream. On restart, Promtail resumes from where it left off rather than re-sending all historical logs.
+The `discovery.relabel` rules map Kubernetes pod metadata to Loki stream labels. In Grafana, logs can be queried with selectors like `{namespace="todo-app"}` or `{app="todo-api"}`.
 
-The `relabel_configs` extract clean Loki labels from Docker metadata:
+### Traces pipeline
 
-| Label       | Source                      | Example value      |
-| ----------- | --------------------------- | ------------------ |
-| `container` | Docker container name       | `api`, `db`        |
-| `service`   | Docker Compose service name | `api`, `db`        |
-| `stream`    | Log stream type             | `stdout`, `stderr` |
+```alloy
+otelcol.receiver.otlp "default" {
+  grpc { endpoint = "0.0.0.0:4317" }
+  output { traces = [otelcol.processor.batch.default.input] }
+}
 
-In Grafana, logs can be queried with selectors like `{container="api"}` or `{service="api", stream="stderr"}`.
+otelcol.processor.batch "default" {
+  output { traces = [otelcol.exporter.otlphttp.tempo.input] }
+}
 
-`http_listen_port: 9080` exposes Promtail's own health (`/ready`) and metrics (`/metrics`) endpoints.
+otelcol.exporter.otlphttp "tempo" {
+  client { endpoint = "http://tempo:4318" }
+}
+```
 
-`grpc_listen_port: 0` explicitly disables the gRPC server — Promtail has no use for it.
+Alloy receives traces from the API over gRPC OTLP (port 4317), batches them, and forwards to Tempo over HTTP OTLP (port 4318). The `batch` processor reduces the number of HTTP calls to Tempo by grouping spans before export.
+
+The API is configured with `OTEL_EXPORTER_OTLP_ENDPOINT=alloy.monitoring.svc.cluster.local:4317`.
 
 ## Tempo
 
@@ -301,43 +321,6 @@ Tempo runs in single-binary mode (`all` target), which starts all components —
 The WAL at `/var/tempo/wal` ensures spans are not lost if Tempo restarts mid-block.
 
 `backend: local` stores trace blocks on the local filesystem, mounted to the `tempo_data` volume.
-
-## OTel Collector
-
-**Config:** `monitoring/otel-collector/otel-collector-config.yml`
-
-```yaml
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-
-processors:
-  batch:
-
-exporters:
-  otlp_http/tempo:
-    endpoint: http://tempo:4318
-
-service:
-  telemetry:
-    logs:
-      level: warn
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [otlp_http/tempo]
-```
-
-The collector sits between the API and Tempo. The API pushes spans over gRPC to port 4317. The collector batches them and forwards to Tempo over HTTP to port 4318.
-
-`batch` processor buffers spans and sends them in chunks, reducing the number of HTTP requests to Tempo. Without it, every individual span would be a separate HTTP call.
-
-The API is configured with `OTEL_EXPORTER_OTLP_ENDPOINT` pointing at the collector. If the collector is unavailable, the SDK logs a warning and drops spans — the API continues running.
-
-The indirection through the collector means swapping the trace backend (e.g. from Tempo to Jaeger) only requires changing the exporter in this config. The API is untouched.
 
 ## Grafana
 

@@ -65,28 +65,26 @@ minikube-delete:
 docker-pull:
 	docker pull areebahmeddd/todo-api:1.0.0
 	docker pull ghcr.io/cloudnative-pg/postgresql:18
-	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0
+	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
 	docker pull traefik:v3.6
 	docker pull grafana/grafana:12.4.0
 	docker pull grafana/loki:3.5.0
-	docker pull grafana/promtail:3.5.0
+	docker pull grafana/alloy:v1.14.0
 	docker pull grafana/tempo:2.8.0
 	docker pull prom/prometheus:v3.10.0
 	docker pull prom/alertmanager:v0.31.0
-	docker pull otel/opentelemetry-collector-contrib:0.147.0
 
 minikube-load: docker-pull
 	minikube image load areebahmeddd/todo-api:1.0.0
-	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0
+	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
 	minikube image load ghcr.io/cloudnative-pg/postgresql:18
 	minikube image load traefik:v3.6
 	minikube image load grafana/grafana:12.4.0
 	minikube image load grafana/loki:3.5.0
-	minikube image load grafana/promtail:3.5.0
+	minikube image load grafana/alloy:v1.14.0
 	minikube image load grafana/tempo:2.8.0
 	minikube image load prom/prometheus:v3.10.0
 	minikube image load prom/alertmanager:v0.31.0
-	minikube image load otel/opentelemetry-collector-contrib:0.147.0
 
 minikube-tunnel:
 	minikube tunnel
