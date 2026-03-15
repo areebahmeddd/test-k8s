@@ -53,7 +53,6 @@ k8s/base/monitoring/
     configmap.yaml       # River (Alloy) pipeline config
     deployment.yaml
     service.yaml
-    ingress.yaml
     clusterrole.yaml
     clusterrolebinding.yaml
     serviceaccount.yaml
@@ -385,13 +384,11 @@ Grafana stores its own data (users, preferences, saved state) in the `grafana_da
 
 ## Access
 
-| Interface    | URL                           | Credentials      | Notes                              |
-| ------------ | ----------------------------- | ---------------- | ---------------------------------- |
-| Grafana      | `http://grafana.localhost`    | admin / admin123 | Unified UI — metrics, logs, traces |
-| Prometheus   | `http://prometheus.localhost` | —                | Query interface and alert state    |
-| Alloy        | `http://localhost:12345`      | —                | Pipeline graph, component health   |
-| Alertmanager | `http://alertmanager:9093`    | —                | No ingress — internal only         |
-| Loki         | `http://loki:3100`            | —                | No ingress — query via Grafana     |
-| Tempo        | `http://tempo:3200`           | —                | No ingress — query via Grafana     |
-
-Requires `minikube tunnel` running and `grafana.localhost`, `prometheus.localhost` in the hosts file. Alloy is accessible via port-forward (`make k8s-pf`). See [SETUP-k8s.md](SETUP-k8s.md) for the full setup.
+| Interface    | URL                     | Credentials      | Notes                                |
+| ------------ | ----------------------- | ---------------- | ------------------------------------ |
+| Grafana      | `http://localhost:3000` | admin / admin123 | Unified UI — metrics, logs, traces   |
+| Prometheus   | `http://localhost:9090` | —                | Query interface and alert state      |
+| Alloy        | `http://localhost:12345`| —                | Pipeline graph, component health     |
+| Alertmanager | `http://localhost:9093` | —                | Active alerts and silence management |
+| Loki         | `http://localhost:3100` | —                | No browser UI — query via Grafana    |
+| Tempo        | `http://localhost:3200` | —                | No browser UI — query via Grafana    |
