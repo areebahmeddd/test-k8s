@@ -125,6 +125,7 @@ k8s-pf:
 	kubectl port-forward -n todo-app svc/todo-api 8000:8000 &
 	kubectl port-forward -n monitoring svc/grafana 3000:3000 &
 	kubectl port-forward -n monitoring svc/prometheus 9090:9090 &
+	kubectl port-forward -n monitoring svc/alloy 12345:12345 &
 	kubectl port-forward -n traefik svc/traefik 9000:9000 &
 
 # ============================================

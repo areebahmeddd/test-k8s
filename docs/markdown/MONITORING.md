@@ -4,37 +4,37 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
 
 ## Stack Overview
 
-| Service      | Image                         | Role                                    | Port |
-| ------------ | ----------------------------- | --------------------------------------- | ---- |
-| Prometheus   | `prom/prometheus:v3.10.0`     | Metrics collection and alerting         | 9090 |
-| Alertmanager | `prom/alertmanager:v0.31.0`   | Alert routing and notification delivery | 9093 |
-| Grafana      | `grafana/grafana:12.4.0`      | Unified dashboard UI                    | 3000 |
-| Loki         | `grafana/loki:3.5.0`          | Log storage and querying                | 3100 |
-| Alloy        | `grafana/alloy:v1.14.0`       | Log collection and trace ingestion      | 4317 |
-| Tempo        | `grafana/tempo:2.8.0`         | Trace storage and querying              | 3200 |
+| Service      | Image                       | Role                                    | Port |
+| ------------ | --------------------------- | --------------------------------------- | ---- |
+| Prometheus   | `prom/prometheus:v3.10.0`   | Metrics collection and alerting         | 9090 |
+| Alertmanager | `prom/alertmanager:v0.31.0` | Alert routing and notification delivery | 9093 |
+| Grafana      | `grafana/grafana:12.4.0`    | Unified dashboard UI                    | 3000 |
+| Loki         | `grafana/loki:3.5.0`        | Log storage and querying                | 3100 |
+| Alloy        | `grafana/alloy:v1.14.0`     | Log collection and trace ingestion      | 4317 |
+| Tempo        | `grafana/tempo:2.8.0`       | Trace storage and querying              | 3200 |
 
 ## Signal Flow
 
 ```
                       ┌──────────────────────────────────┐
-                      │           GRAFANA :3000           │
-                      │  (unified UI for all 3 pillars)   │
+                      │           GRAFANA :3000          │
+                      │  (unified UI for all 3 pillars)  │
                       └────────┬──────────┬──────────┬───┘
                                │          │          │
-                        metrics │          │ logs     │ traces
+                        metrics│          │ logs     │ traces
                                │          │          │
                       ┌────────▼──┐  ┌────▼────┐  ┌─▼──────┐
                       │PROMETHEUS │  │  LOKI   │  │ TEMPO  │
                       │  :9090    │  │  :3100  │  │ :3200  │
                       └────┬──────┘  └────▲────┘  └────▲───┘
                            │              │             │
-                      fires │         push │        push │
-                      alerts│         logs │      traces │
+                      fires│          push│         push│
+                      alert│          logs│       traces│
                       ┌─────▼──────┐  ┌───┴─────────────┴──┐
-                      │ALERTMANAGER│  │        ALLOY        │
-                      │  :9093     │  │  logs  :—  otlp :4317│
-                      └────────────┘  └──────────┬──────────┘
-                                                  │ receives traces
+                      │ALERTMANAGER│  │        ALLOY       │
+                      │  :9093     │  │logs  :—  otlp :4317│
+                      └────────────┘  └────────────────────┘
+                                                  │receives traces
                                              ┌────▼────┐
                                              │   API   │
                                              │  :8000  │
@@ -53,6 +53,7 @@ k8s/base/monitoring/
     configmap.yaml       # River (Alloy) pipeline config
     deployment.yaml
     service.yaml
+    ingress.yaml
     clusterrole.yaml
     clusterrolebinding.yaml
     serviceaccount.yaml

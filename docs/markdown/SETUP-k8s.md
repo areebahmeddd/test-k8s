@@ -17,7 +17,7 @@ Four namespaces:
 | `argocd`     | ArgoCD server, application controller, repo server, dex, redis                          |
 | `traefik`    | Traefik ingress controller (LoadBalancer service)                                       |
 | `todo-app`   | `todo-api` Deployment + HPA, `todo-db` StatefulSet, Services, ConfigMap, ServiceAccount |
-| `monitoring` | Prometheus, Alertmanager, Grafana, Loki, Promtail, Tempo, OTel Collector                |
+| `monitoring` | Prometheus, Alertmanager, Grafana, Loki, Alloy, Tempo                                   |
 
 Two Kustomize overlays share the same base:
 
@@ -100,6 +100,7 @@ Each `*.localhost` hostname must resolve to `127.0.0.1` on your machine. Add the
 127.0.0.1  argocd.localhost
 127.0.0.1  grafana.localhost
 127.0.0.1  prometheus.localhost
+127.0.0.1  alloy.localhost
 127.0.0.1  traefik.localhost
 ```
 
@@ -146,6 +147,7 @@ make k8s-status
 | ArgoCD     | `http://argocd.localhost`             | admin / admin123 |
 | Grafana    | `http://grafana.localhost`            | admin / admin123 |
 | Prometheus | `http://prometheus.localhost`         | —                |
+| Alloy      | `http://alloy.localhost`              | —                |
 | Traefik    | `http://traefik.localhost/dashboard/` | —                |
 
 ### 8. Tear down

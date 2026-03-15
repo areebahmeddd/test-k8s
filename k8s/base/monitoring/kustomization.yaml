@@ -11,6 +11,7 @@ resources:
   - alloy/clusterrolebinding.yaml
   - alloy/configmap.yaml
   - alloy/service.yaml
+  - alloy/ingress.yaml
   - alloy/deployment.yaml
   # Storage
   - loki/configmap.yaml
