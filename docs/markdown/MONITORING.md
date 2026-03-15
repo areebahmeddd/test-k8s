@@ -385,10 +385,13 @@ Grafana stores its own data (users, preferences, saved state) in the `grafana_da
 
 ## Access
 
-| Interface    | URL                     | Notes                                |
-| ------------ | ----------------------- | ------------------------------------ |
-| Grafana      | `http://localhost:3000` | Default credentials: admin / admin   |
-| Prometheus   | `http://localhost:9090` | Query interface and alert state      |
-| Alertmanager | `http://localhost:9093` | Active alerts and silence management |
-| Loki         | `http://localhost:3100` | No browser UI — query via Grafana    |
-| Tempo        | `http://localhost:3200` | No browser UI — query via Grafana    |
+| Interface    | URL                                   | Credentials      | Notes                                |
+| ------------ | ------------------------------------- | ---------------- | ------------------------------------ |
+| Grafana      | `http://grafana.localhost`            | admin / admin123 | Unified UI — metrics, logs, traces   |
+| Prometheus   | `http://prometheus.localhost`         | —                | Query interface and alert state      |
+| Alloy        | `http://alloy.localhost`              | —                | Pipeline graph, component health     |
+| Alertmanager | `http://alertmanager:9093`            | —                | No ingress — internal only           |
+| Loki         | `http://loki:3100`                    | —                | No ingress — query via Grafana       |
+| Tempo        | `http://tempo:3200`                   | —                | No ingress — query via Grafana       |
+
+Requires `minikube tunnel` running and `alloy.localhost`, `grafana.localhost`, `prometheus.localhost` in the hosts file. See [SETUP-k8s.md](SETUP-k8s.md) for the full setup.
