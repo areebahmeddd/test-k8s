@@ -6,11 +6,11 @@ namespace: monitoring
 resources:
   - namespace.yaml
   # Collectors
-  - promtail/serviceaccount.yaml
-  - promtail/clusterrole.yaml
-  - promtail/clusterrolebinding.yaml
-  - promtail/configmap.yaml
-  - promtail/daemonset.yaml
+  - alloy/serviceaccount.yaml
+  - alloy/clusterrole.yaml
+  - alloy/clusterrolebinding.yaml
+  - alloy/configmap.yaml
+  - alloy/deployment.yaml
   - otel-collector/configmap.yaml
   - otel-collector/deployment.yaml
   - otel-collector/service.yaml
