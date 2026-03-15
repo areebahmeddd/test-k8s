@@ -44,6 +44,9 @@ spec:
             - name: http-metrics
               containerPort: 12345
               protocol: TCP
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
           volumeMounts:
             - name: config
               mountPath: /etc/alloy
