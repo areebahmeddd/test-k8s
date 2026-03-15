@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../base/app
+  - ../../base/postgres
   - ../../base/monitoring
   - ../../base/traefik
   # Secrets are excluded here — applied separately via: sops -d <file> | kubectl apply -f -
@@ -10,3 +11,11 @@ resources:
   # - secrets/todo-db-secret.yaml
   # - secrets/grafana-secret.yaml
   # - secrets/alertmanager-secret.yaml
+
+patches:
+  - path: postgres-patch.yaml
+    target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Cluster
+      name: todo-db

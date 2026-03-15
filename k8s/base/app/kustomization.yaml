@@ -7,9 +7,6 @@ resources:
   - namespace.yaml
   - todo-api-serviceaccount.yaml
   - todo-api-configmap.yaml
-  - todo-db-service-headless.yaml
-  - todo-db-statefulset.yaml
-  - todo-db-service.yaml
   - todo-api-deployment.yaml
   - todo-api-service.yaml
   - todo-api-ingress.yaml

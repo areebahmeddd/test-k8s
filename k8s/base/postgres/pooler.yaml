@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/pooler_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: todo-db-pooler
+  labels:
+    app.kubernetes.io/name: todo-db-pooler
+    app.kubernetes.io/instance: todo-db-pooler
+    app.kubernetes.io/component: connection-pooler
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  cluster:
+    name: todo-db
+
+  type: rw
+
+  # Patched per overlay: dev → 1, prod → 2
+  instances: 1
+
+  template:
+    spec:
+      containers:
+        - name: pgbouncer
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+
+  pgbouncer:
+    # session mode: safe for SQLAlchemy async (transaction mode breaks prepared statements)
+    poolMode: session
+    parameters:
+      max_client_conn: "100"
+      default_pool_size: "25"
+      server_idle_timeout: "600"
+      query_wait_timeout: "120"

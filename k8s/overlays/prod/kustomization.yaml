@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../base/app
+  - ../../base/postgres
   - ../../base/monitoring
   - ../../base/traefik
   - hpa-todo-api.yaml
@@ -12,8 +13,21 @@ resources:
   # - secrets/grafana-secret.yaml
   # - secrets/alertmanager-secret.yaml
 
-# Override ingress hosts for production.
 patches:
+  - path: postgres-patch.yaml
+    target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Cluster
+      name: todo-db
+
+  - path: pooler-patch.yaml
+    target:
+      group: postgresql.cnpg.io
+      version: v1
+      kind: Pooler
+      name: todo-db-pooler
+
   - patch: |-
       - op: replace
         path: /spec/rules/0/host

@@ -1,0 +1,11 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: todo-db
+spec:
+  instances: 1
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 1Gi
+  enablePDB: false

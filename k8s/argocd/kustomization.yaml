@@ -8,6 +8,7 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.0/manifests/install.yaml
   - sops-age-secret.yaml
   - argocd-server-ingress.yaml
+  - applications/cloudnativepg.yaml
   - applications/todo-app-dev.yaml
   - applications/todo-app-prod.yaml
 

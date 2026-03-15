@@ -1,0 +1,6 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: todo-db-pooler
+spec:
+  instances: 2

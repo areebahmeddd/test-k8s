@@ -4,6 +4,7 @@
         minikube-create minikube-delete minikube-load minikube-tunnel docker-pull \
         k8s-build k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
         check-sops sops-encrypt sops-decrypt \
+        db-reset cnpg-status \
         validate validate-k8s validate-schema validate-sops validate-policies
 
 # AGE private key used by SOPS — expected at the project root as age.key.
@@ -63,7 +64,8 @@ minikube-delete:
 
 docker-pull:
 	docker pull areebahmeddd/todo-api:1.0.0
-	docker pull postgres:18-alpine
+	docker pull ghcr.io/cloudnative-pg/postgresql:18
+	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0
 	docker pull traefik:v3.6
 	docker pull grafana/grafana:12.4.0
 	docker pull grafana/loki:3.5.0
@@ -75,7 +77,8 @@ docker-pull:
 
 minikube-load: docker-pull
 	minikube image load areebahmeddd/todo-api:1.0.0
-	minikube image load postgres:18-alpine
+	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0
+	minikube image load ghcr.io/cloudnative-pg/postgresql:18
 	minikube image load traefik:v3.6
 	minikube image load grafana/grafana:12.4.0
 	minikube image load grafana/loki:3.5.0
@@ -173,6 +176,26 @@ sops-decrypt:
 	 done
 
 # ============================================
+# CloudNativePG
+# ============================================
+
+db-reset:
+	kubectl delete cluster todo-db -n todo-app --ignore-not-found
+	kubectl delete pvc -l cnpg.io/cluster=todo-db -n todo-app --ignore-not-found
+	@echo "Waiting for cluster finalizers to clear..."
+	sleep 5
+	@for f in k8s/overlays/$(OVERLAY)/secrets/todo-db-secret.yaml; do \
+		echo "Applying secret: $$f"; \
+		sops -d $$f | kubectl apply -f -; \
+	 done
+	kustomize build k8s/overlays/$(OVERLAY)/ | kubectl apply -f -
+
+cnpg-status:
+	kubectl get cluster todo-db -n todo-app -o wide
+	kubectl get pods -n todo-app -l cnpg.io/cluster=todo-db
+	kubectl get pvc -n todo-app -l cnpg.io/cluster=todo-db
+
+# ============================================
 # Validation
 # ============================================
 
@@ -184,7 +207,10 @@ validate-k8s:
 
 validate-schema:
 	kustomize build k8s/overlays/dev | \
-	  kubeconform -strict -ignore-missing-schemas -summary -skip Secret -
+	  kubeconform -strict -ignore-missing-schemas -summary -skip Secret \
+	    -schema-location default \
+	    -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+	    -
 
 validate-sops:
 	@for f in k8s/overlays/dev/secrets/*.yaml k8s/overlays/prod/secrets/*.yaml; do \

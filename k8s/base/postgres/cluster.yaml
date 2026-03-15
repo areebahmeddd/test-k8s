@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: todo-db
+  labels:
+    app.kubernetes.io/name: todo-db
+    app.kubernetes.io/instance: todo-db
+    app.kubernetes.io/version: "18"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  imagePullPolicy: IfNotPresent
+
+  # Patched per overlay: dev → 1, prod → 3
+  instances: 1
+
+  # todo-db-secret must contain: stringData.password: <value>
+  bootstrap:
+    initdb:
+      database: todos
+      owner: admin
+      secret:
+        name: todo-db-secret
+      dataChecksums: true
+      encoding: UTF8
+
+  # Patched per overlay: dev → 5Gi, prod → 50Gi
+  storage:
+    size: 5Gi
+
+  walStorage:
+    size: 1Gi
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  replicationSlots:
+    highAvailability:
+      enabled: true
+
+  # Patched per overlay: dev → false, prod → true
+  enablePDB: false
+
+  logLevel: info
