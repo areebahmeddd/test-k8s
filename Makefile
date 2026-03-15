@@ -1,7 +1,7 @@
-SHELL := /bin/bash
+﻿SHELL := /bin/bash
 
 .PHONY: up down quality test coverage migrate upgrade downgrade \
-        minikube-create minikube-delete minikube-load minikube-tunnel \
+        minikube-create minikube-delete minikube-load minikube-tunnel docker-pull \
         k8s-build k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
         check-sops sops-encrypt sops-decrypt \
         validate validate-k8s validate-schema validate-sops validate-policies
@@ -61,7 +61,19 @@ minikube-create:
 minikube-delete:
 	minikube delete
 
-minikube-load:
+docker-pull:
+	docker pull areebahmeddd/todo-api:1.0.0
+	docker pull postgres:18-alpine
+	docker pull traefik:v3.6
+	docker pull grafana/grafana:12.4.0
+	docker pull grafana/loki:3.5.0
+	docker pull grafana/promtail:3.5.0
+	docker pull grafana/tempo:2.8.0
+	docker pull prom/prometheus:v3.10.0
+	docker pull prom/alertmanager:v0.31.0
+	docker pull otel/opentelemetry-collector-contrib:0.147.0
+
+minikube-load: docker-pull
 	minikube image load areebahmeddd/todo-api:1.0.0
 	minikube image load postgres:18-alpine
 	minikube image load traefik:v3.6
