@@ -385,13 +385,13 @@ Grafana stores its own data (users, preferences, saved state) in the `grafana_da
 
 ## Access
 
-| Interface    | URL                                   | Credentials      | Notes                                |
-| ------------ | ------------------------------------- | ---------------- | ------------------------------------ |
-| Grafana      | `http://grafana.localhost`            | admin / admin123 | Unified UI — metrics, logs, traces   |
-| Prometheus   | `http://prometheus.localhost`         | —                | Query interface and alert state      |
-| Alloy        | `http://alloy.localhost`              | —                | Pipeline graph, component health     |
-| Alertmanager | `http://alertmanager:9093`            | —                | No ingress — internal only           |
-| Loki         | `http://loki:3100`                    | —                | No ingress — query via Grafana       |
-| Tempo        | `http://tempo:3200`                   | —                | No ingress — query via Grafana       |
+| Interface    | URL                           | Credentials      | Notes                              |
+| ------------ | ----------------------------- | ---------------- | ---------------------------------- |
+| Grafana      | `http://grafana.localhost`    | admin / admin123 | Unified UI — metrics, logs, traces |
+| Prometheus   | `http://prometheus.localhost` | —                | Query interface and alert state    |
+| Alloy        | `http://localhost:12345`      | —                | Pipeline graph, component health   |
+| Alertmanager | `http://alertmanager:9093`    | —                | No ingress — internal only         |
+| Loki         | `http://loki:3100`            | —                | No ingress — query via Grafana     |
+| Tempo        | `http://tempo:3200`           | —                | No ingress — query via Grafana     |
 
-Requires `minikube tunnel` running and `alloy.localhost`, `grafana.localhost`, `prometheus.localhost` in the hosts file. See [SETUP-k8s.md](SETUP-k8s.md) for the full setup.
+Requires `minikube tunnel` running and `grafana.localhost`, `prometheus.localhost` in the hosts file. Alloy is accessible via port-forward (`make k8s-pf`). See [SETUP-k8s.md](SETUP-k8s.md) for the full setup.
