@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/instance: alloy
-    app.kubernetes.io/version: "v1.8.1"
+    app.kubernetes.io/version: "v1.14.0"
     app.kubernetes.io/component: log-collector
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/instance: alloy
-        app.kubernetes.io/version: "v1.8.1"
+        app.kubernetes.io/version: "v1.14.0"
         app.kubernetes.io/component: log-collector
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -32,7 +32,7 @@ spec:
         fsGroup: 473
       containers:
         - name: alloy
-          image: grafana/alloy:v1.8.1
+          image: grafana/alloy:v1.14.0
           imagePullPolicy: IfNotPresent
           args:
             - run
@@ -50,8 +50,6 @@ spec:
               readOnly: true
             - name: storage
               mountPath: /var/lib/alloy/data
-          # /-/ready returns HTTP 200 as soon as the initial config is loaded (fast).
-          # This avoids the SD-init-blocking issue that promtail had with /ready.
           readinessProbe:
             httpGet:
               path: /-/ready
@@ -59,8 +57,6 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 5
-          # Liveness uses TCP — /-/healthy is explicitly not recommended for liveness probes
-          # by the Alloy docs, as an unhealthy component doesn't always warrant a restart.
           livenessProbe:
             tcpSocket:
               port: http-metrics

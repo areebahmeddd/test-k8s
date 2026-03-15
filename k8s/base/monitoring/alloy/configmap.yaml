@@ -10,13 +10,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 data:
   config.alloy: |
-    // Discover all Kubernetes pods in the cluster.
-    // loki.source.kubernetes uses the K8s API — no node filesystem access required.
     discovery.kubernetes "pod" {
       role = "pod"
     }
 
-    // Relabel pod metadata into useful Loki stream labels.
     discovery.relabel "pod_logs" {
       targets = discovery.kubernetes.pod.targets
 
@@ -53,13 +50,11 @@ data:
       }
     }
 
-    // Stream logs from pods via the Kubernetes API and forward to Loki.
     loki.source.kubernetes "pod_logs" {
       targets    = discovery.relabel.pod_logs.output
       forward_to = [loki.write.loki.receiver]
     }
 
-    // Write log entries to Loki.
     loki.write "loki" {
       endpoint {
         url = "http://loki:3100/loki/api/v1/push"
