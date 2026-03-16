@@ -82,8 +82,9 @@ volumeMounts:
 labels:
   app.kubernetes.io/name: todo-api
   app.kubernetes.io/instance: todo-api-dev
-  app.kubernetes.io/component: api # api | db | worker | cache
   app.kubernetes.io/version: "1.2.3" # image tag
+  app.kubernetes.io/component: api # api | db | worker | cache
+  app.kubernetes.io/part-of: todo-app
   app.kubernetes.io/managed-by: kustomize
 ```
 

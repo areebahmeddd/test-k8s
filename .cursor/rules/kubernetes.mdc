@@ -8,23 +8,25 @@ globs: "k8s/**"
 
 ```yaml
 resources:
-  requests:
+  requests: # Scheduler guarantee — what K8s reserves on the node
     cpu: "100m"
     memory: "128Mi"
-  limits:
+  limits: # Hard cap — OOMKill if memory exceeded; throttle if CPU exceeded
     cpu: "500m"
     memory: "512Mi"
 ```
 
+Rules:
+
 - Never set limits without requests
 - Never omit both — pods are evicted first under node pressure
 - Set memory limit close to request (loose limits waste node capacity)
-- CPU limits cause throttling — be generous or omit CPU limit if latency matters
+- CPU limits cause throttling even when node has spare — be generous or omit CPU limit if latency matters
 
 ## Health Probes (Required)
 
 ```yaml
-livenessProbe:
+livenessProbe: # Restart container if this fails (deadlock detection)
   httpGet:
     path: /health
     port: 8000
@@ -32,7 +34,7 @@ livenessProbe:
   periodSeconds: 20
   failureThreshold: 3
 
-readinessProbe:
+readinessProbe: # Remove pod from Service endpoints until ready
   httpGet:
     path: /health
     port: 8000
@@ -40,7 +42,7 @@ readinessProbe:
   periodSeconds: 10
   failureThreshold: 3
 
-startupProbe:
+startupProbe: # For slow-starting pods — disables liveness until started
   httpGet:
     path: /health
     port: 8000
@@ -79,8 +81,9 @@ volumeMounts:
 labels:
   app.kubernetes.io/name: todo-api
   app.kubernetes.io/instance: todo-api-dev
-  app.kubernetes.io/component: api
-  app.kubernetes.io/version: "1.2.3"
+  app.kubernetes.io/version: "1.2.3" # image tag
+  app.kubernetes.io/component: api # api | db | worker | cache
+  app.kubernetes.io/part-of: todo-app
   app.kubernetes.io/managed-by: kustomize
 ```
 
@@ -89,5 +92,81 @@ labels:
 - Base manifests: `k8s/base/` — no env-specific values
 - Env patches: `k8s/overlays/dev/` and `k8s/overlays/prod/`
 - Image tag overrides: use `images:` transformer in overlay `kustomization.yaml`
-- Secrets: never commit to Git — use external-secrets operator or `.env` in `.gitignore`
+- Secrets: never commit to Git — reference `.env` files listed in `.gitignore`, or use external-secrets operator
 - `namePrefix` / `nameSuffix` to namespace resource names between envs
+
+## Field Ordering
+
+Consistent ordering makes diffs readable and reviews predictable.
+
+**Every resource document:**
+
+```
+apiVersion → kind → metadata (name → namespace → labels → annotations) → spec
+```
+
+**Deployment `spec:`**
+
+```
+replicas → selector → template
+```
+
+**Pod `spec:` (inside `template.spec`):**
+
+```
+serviceAccountName → securityContext (pod-level) → initContainers → containers → volumes
+```
+
+**Container fields:**
+
+```
+name → image → imagePullPolicy → command → args → ports
+→ env / envFrom → volumeMounts
+→ readinessProbe → livenessProbe → startupProbe
+→ resources → securityContext (container-level)
+```
+
+> Pod-level `securityContext` goes **before** `containers`. Container-level `securityContext` goes **after** `resources`
+
+**Service `spec:`**
+
+```
+type → selector → ports (name → port → targetPort → protocol)
+```
+
+**Ingress `spec:`**
+
+```
+ingressClassName → tls → rules
+```
+
+**`kustomization.yaml`:**
+
+```
+apiVersion → kind → namespace → resources → patches → images → configMapGenerator → secretGenerator
+```
+
+Resource listing order within a `kustomization.yaml`:
+
+```
+namespace → ServiceAccount → ClusterRole → ClusterRoleBinding → ConfigMap → Deployment → Service → Ingress
+```
+
+Overlay `resources:` layer order (infrastructure before application):
+
+```
+traefik (ingress controller) → postgres (data) → app → monitoring (observability)
+```
+
+## Production Checklist
+
+- [ ] Resource `requests` AND `limits` set on every container
+- [ ] `livenessProbe` and `readinessProbe` set
+- [ ] `runAsNonRoot: true` set
+- [ ] `allowPrivilegeEscalation: false` set
+- [ ] `readOnlyRootFilesystem: true` set (with tmpfs if needed)
+- [ ] `capabilities.drop: ["ALL"]` set
+- [ ] No secrets in ConfigMaps or inline `env.value` fields
+- [ ] `PodDisruptionBudget` defined for critical services (minimum 1 available)
+- [ ] `topologySpreadConstraints` set for deployments with >1 replica (HA across zones)
+- [ ] `terminationGracePeriodSeconds` set to allow graceful shutdown

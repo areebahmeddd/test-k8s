@@ -8,10 +8,9 @@ resources:
   - ../../base/monitoring
   - hpa-todo-api.yaml
   # Internal-tool ingresses — excluded from base to avoid host-less routing conflicts in dev.
-  - ../../base/traefik/dashboard-ingress.yaml
-  - ../../base/monitoring/alloy/ingress.yaml
-  - ../../base/monitoring/prometheus/ingress.yaml
-  - ../../base/monitoring/grafana/ingress.yaml
+  # Each is a kustomization directory so kustomize v5 load restrictions are satisfied.
+  - ../../base/traefik/dashboard-ingress
+  - ../../base/monitoring/tool-ingresses
   # Secrets are excluded here — applied separately via: sops -d <file> | kubectl apply -f -
   # - secrets/todo-api-secret.yaml
   # - secrets/todo-db-secret.yaml
