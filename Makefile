@@ -57,7 +57,8 @@ downgrade:
 # ============================================
 
 minikube-create:
-	minikube start --cpus=4 --memory=8192
+	minikube start
+	kubectl label node minikube ingress-ready=true
 
 minikube-delete:
 	minikube delete
@@ -99,13 +100,18 @@ k8s-build:
 k8s-deploy: check-sops
 	# Step 1: Apply ArgoCD (two passes — first installs CRDs, second applies Applications)
 	kubectl apply -k k8s/argocd/ --server-side || kubectl apply -k k8s/argocd/ --server-side
-	# Step 2: Apply the overlay manifests (namespaces, deployments, configmaps, ingress)
+	# Step 2: Sync CNPG operator and wait — Cluster/Pooler CRDs must exist before step 3
+	argocd app sync cloudnativepg --server localhost:8080 --insecure || true
+	kubectl rollout status deployment/cloudnative-pg -n cnpg-system --timeout=120s
+	# Step 3: Apply the overlay manifests (namespaces, deployments, configmaps, ingress)
 	kustomize build k8s/overlays/$(OVERLAY)/ | kubectl apply -f -
-	# Step 3: Decrypt and apply SOPS-encrypted secrets
+	# Step 4: Decrypt and apply SOPS-encrypted secrets
 	@for f in k8s/overlays/$(OVERLAY)/secrets/*.yaml; do \
 		echo "Applying secret: $$f"; \
 		sops -d $$f | kubectl apply -f -; \
 	 done
+	# Step 5: Label the node for ingress scheduling (minikube only — idempotent on real clusters)
+	kubectl label node minikube ingress-ready=true --overwrite 2>/dev/null || true
 
 k8s-delete:
 	kubectl delete -k k8s/argocd/ --ignore-not-found
@@ -117,16 +123,13 @@ k8s-status:
 	kubectl get all -n monitoring
 	kubectl get all -n traefik
 
-k8s-logs:
-	kubectl logs -n todo-app -l app.kubernetes.io/name=todo-api --tail=50 -f
-
 k8s-pf:
-	kubectl port-forward -n argocd svc/argocd-server 8080:80 &
 	kubectl port-forward -n todo-app svc/todo-api 8000:8000 &
+	kubectl port-forward -n traefik svc/traefik 9000:9000 &
+	kubectl port-forward -n argocd svc/argocd-server 8080:80 &
 	kubectl port-forward -n monitoring svc/grafana 3000:3000 &
 	kubectl port-forward -n monitoring svc/prometheus 9090:9090 &
 	kubectl port-forward -n monitoring svc/alloy 12345:12345 &
-	kubectl port-forward -n traefik svc/traefik 9000:9000 &
 
 # ============================================
 # SOPS Secret Management
