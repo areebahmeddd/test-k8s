@@ -2,11 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../base/app
-  - ../../base/postgres
-  - ../../base/monitoring
   - ../../base/traefik
+  - ../../base/postgres
+  - ../../base/app
+  - ../../base/monitoring
   - hpa-todo-api.yaml
+  # Internal-tool ingresses — excluded from base to avoid host-less routing conflicts in dev.
+  - ../../base/traefik/dashboard-ingress.yaml
+  - ../../base/monitoring/alloy/ingress.yaml
+  - ../../base/monitoring/prometheus/ingress.yaml
+  - ../../base/monitoring/grafana/ingress.yaml
   # Secrets are excluded here — applied separately via: sops -d <file> | kubectl apply -f -
   # - secrets/todo-api-secret.yaml
   # - secrets/todo-db-secret.yaml
@@ -14,6 +19,7 @@ resources:
   # - secrets/alertmanager-secret.yaml
 
 patches:
+  # Database
   - path: postgres-patch.yaml
     target:
       group: postgresql.cnpg.io
@@ -28,8 +34,9 @@ patches:
       kind: Pooler
       name: todo-db-pooler
 
+  # Ingress hosts
   - patch: |-
-      - op: replace
+      - op: add
         path: /spec/rules/0/host
         value: todo.1mindlabs.org
     target:
@@ -37,7 +44,7 @@ patches:
       name: todo-api
 
   - patch: |-
-      - op: replace
+      - op: add
         path: /spec/rules/0/host
         value: grafana.1mindlabs.org
     target:
@@ -45,7 +52,7 @@ patches:
       name: grafana
 
   - patch: |-
-      - op: replace
+      - op: add
         path: /spec/rules/0/host
         value: prometheus.1mindlabs.org
     target:
@@ -53,13 +60,20 @@ patches:
       name: prometheus
 
   - patch: |-
-      - op: replace
+      - op: add
+        path: /spec/rules/0/host
+        value: alloy.1mindlabs.org
+    target:
+      kind: Ingress
+      name: alloy
+
+  - patch: |-
+      - op: add
         path: /spec/rules/0/host
         value: traefik.1mindlabs.org
     target:
       kind: Ingress
       name: traefik-dashboard
 
-  # TODO: add host patch for alloy ingress (alloy.1mindlabs.org or similar) and
-  # add TLS + auth middleware patches for all internal-tool ingresses (prometheus,
-  # alloy, traefik-dashboard) once cert-manager and a ClusterIssuer are in place.
+  # TODO: add TLS + auth middleware patches for all internal-tool ingresses
+  # (prometheus, alloy, traefik-dashboard) once cert-manager and a ClusterIssuer are in place.

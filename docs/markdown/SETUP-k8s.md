@@ -264,22 +264,22 @@ All resource requests and limits are declared in `k8s/base/`. The dev overlay do
 **Totals across all pods (single replica each):**
 
 - CPU requests: `800m` · CPU limits: `3000m`
-- Memory requests: `2112Mi (~2.1 GiB)` · Memory limits: `4736Mi (~4.6 GiB)`
+- Memory requests: `2432Mi (~2.4 GiB)` · Memory limits: `4972Mi (~4.9 GiB)`
 
 ### Per-container breakdown
 
-| Component        | Namespace    | CPU Request | Mem Request | CPU Limit | Mem Limit |
-| ---------------- | ------------ | ----------- | ----------- | --------- | --------- |
-| `todo-api`       | `todo-app`   | 100m        | 256Mi       | 500m      | 512Mi     |
-| `todo-db`        | `todo-app`   | 250m        | 512Mi       | 500m      | 1Gi       |
-| `traefik`        | `traefik`    | 100m        | 64Mi        | 500m      | 128Mi     |
-| `prometheus`     | `monitoring` | 100m        | 512Mi       | 500m      | 1Gi       |
-| `grafana`        | `monitoring` | 50m         | 128Mi       | 200m      | 512Mi     |
-| `loki`           | `monitoring` | 50m         | 256Mi       | 200m      | 512Mi     |
-| `tempo`          | `monitoring` | 50m         | 128Mi       | 200m      | 512Mi     |
-| `otel-collector` | `monitoring` | 50m         | 128Mi       | 200m      | 256Mi     |
-| `alertmanager`   | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
-| `promtail`       | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
+| Component      | Namespace    | CPU Request | Mem Request | CPU Limit | Mem Limit |
+| -------------- | ------------ | ----------- | ----------- | --------- | --------- |
+| `todo-api`     | `todo-app`   | 100m        | 256Mi       | 500m      | 512Mi     |
+| `todo-db`      | `todo-app`   | 250m        | 512Mi       | 500m      | 1Gi       |
+| `pgbouncer`    | `todo-app`   | 50m         | 64Mi        | 200m      | 256Mi     |
+| `traefik`      | `traefik`    | 100m        | 128Mi       | 500m      | 256Mi     |
+| `prometheus`   | `monitoring` | 100m        | 512Mi       | 500m      | 1Gi       |
+| `grafana`      | `monitoring` | 50m         | 256Mi       | 200m      | 512Mi     |
+| `loki`         | `monitoring` | 50m         | 256Mi       | 200m      | 512Mi     |
+| `tempo`        | `monitoring` | 50m         | 256Mi       | 200m      | 512Mi     |
+| `alloy`        | `monitoring` | 25m         | 128Mi       | 100m      | 256Mi     |
+| `alertmanager` | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
 
 > ArgoCD system pods (`argocd-server`, `application-controller`, `repo-server`, `dex`, `redis`) do not declare resource limits in this project — they use ArgoCD's upstream defaults.
 

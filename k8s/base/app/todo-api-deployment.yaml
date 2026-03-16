@@ -25,10 +25,14 @@ spec:
         app.kubernetes.io/managed-by: kustomize
     spec:
       serviceAccountName: todo-api
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 1000
+      #   runAsGroup: 1000
       containers:
         - name: todo-api
           image: areebahmeddd/todo-api:1.0.0
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: IfNotPresent # TODO: change to Always when pulling from a real container registry.
           ports:
             - name: http
               containerPort: 8000
@@ -59,3 +63,7 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   capabilities:
+          #     drop: ["ALL"]

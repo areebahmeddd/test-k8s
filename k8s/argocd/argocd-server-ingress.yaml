@@ -10,17 +10,8 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
+  # TODO: add a tls block with cert-manager ClusterIssuer.
   rules:
-    - host: argocd.localhost
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 80
     - host: argocd.1mindlabs.org
       http:
         paths:

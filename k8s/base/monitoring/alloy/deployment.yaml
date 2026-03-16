@@ -69,15 +69,19 @@ spec:
           resources:
             requests:
               cpu: "25m"
-              memory: "64Mi"
+              memory: "128Mi"
             limits:
               cpu: "100m"
               memory: "256Mi"
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   capabilities:
+          #     drop: ["ALL"]
       volumes:
         - name: config
           configMap:
             name: alloy-config
         - name: storage
-          # TODO: replace with a PersistentVolumeClaim in prod — position cursors
+          # TODO: replace with a PersistentVolumeClaim — position cursors
           # are lost on restart, causing brief duplicate log ingestion into Loki.
           emptyDir: {}

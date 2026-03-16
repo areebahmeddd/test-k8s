@@ -24,6 +24,11 @@ spec:
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
     spec:
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 472
+      #   runAsGroup: 472
+      #   fsGroup: 472
       containers:
         - name: grafana
           image: grafana/grafana:12.4.0
@@ -74,10 +79,14 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "128Mi"
+              memory: "256Mi"
             limits:
               cpu: "200m"
               memory: "512Mi"
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   capabilities:
+          #     drop: ["ALL"]
       volumes:
         - name: datasources
           configMap:
@@ -89,6 +98,6 @@ spec:
           configMap:
             name: grafana-dashboards
         - name: data
-          # TODO: replace with a PersistentVolumeClaim in prod — any dashboards or
+          # TODO: replace with a PersistentVolumeClaim — any dashboards or
           # settings saved through the UI are lost on every pod restart with emptyDir.
           emptyDir: {}

@@ -15,8 +15,7 @@ resources:
 patches:
   # Run argocd-server in HTTP mode so the Traefik Ingress can route to port 80
   # without needing TLS passthrough or cert-manager.
-  # TODO: remove server.insecure in prod — terminate TLS at Traefik with cert-manager
-  # (add a ClusterIssuer + tls block to argocd-server-ingress.yaml) instead.
+  # TODO: remove server.insecure — terminate TLS at Traefik with cert-manager.
   - target:
       kind: ConfigMap
       name: argocd-cmd-params-cm

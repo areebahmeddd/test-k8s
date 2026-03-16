@@ -11,11 +11,11 @@ metadata:
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
 spec:
-  imageName: ghcr.io/cloudnative-pg/postgresql:18
-  imagePullPolicy: IfNotPresent
-
   # Patched per overlay: dev → 1, prod → 3
   instances: 1
+
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  imagePullPolicy: IfNotPresent
 
   # todo-db-secret must contain: stringData.password: <value>
   bootstrap:

@@ -83,8 +83,9 @@ volumeMounts:
 labels:
   app.kubernetes.io/name: todo-api
   app.kubernetes.io/instance: todo-api-dev
-  app.kubernetes.io/component: api # api | db | worker | cache
   app.kubernetes.io/version: "1.2.3" # image tag
+  app.kubernetes.io/component: api # api | db | worker | cache
+  app.kubernetes.io/part-of: todo-app
   app.kubernetes.io/managed-by: kustomize
 ```
 
@@ -95,6 +96,69 @@ labels:
 - Image tag overrides: use `images:` transformer in overlay `kustomization.yaml`
 - Secrets: never commit to Git — reference `.env` files listed in `.gitignore`, or use external-secrets operator
 - `namePrefix` / `nameSuffix` to namespace resource names between envs
+
+## Field Ordering
+
+Consistent ordering makes diffs readable and reviews predictable.
+
+**Every resource document:**
+
+```
+apiVersion → kind → metadata (name → namespace → labels → annotations) → spec
+```
+
+**Deployment `spec:`**
+
+```
+replicas → selector → template
+```
+
+**Pod `spec:` (inside `template.spec`):**
+
+```
+serviceAccountName → securityContext (pod-level) → initContainers → containers → volumes
+```
+
+**Container fields:**
+
+```
+name → image → imagePullPolicy → command → args → ports
+→ env / envFrom → volumeMounts
+→ readinessProbe → livenessProbe → startupProbe
+→ resources → securityContext (container-level)
+```
+
+> Pod-level `securityContext` goes **before** `containers`. Container-level `securityContext` goes **after** `resources`
+
+**Service `spec:`**
+
+```
+type → selector → ports (name → port → targetPort → protocol)
+```
+
+**Ingress `spec:`**
+
+```
+ingressClassName → tls → rules
+```
+
+**`kustomization.yaml`:**
+
+```
+apiVersion → kind → namespace → resources → patches → images → configMapGenerator → secretGenerator
+```
+
+Resource listing order within a `kustomization.yaml`:
+
+```
+namespace → ServiceAccount → ClusterRole → ClusterRoleBinding → ConfigMap → Deployment → Service → Ingress
+```
+
+Overlay `resources:` layer order (infrastructure before application):
+
+```
+traefik (ingress controller) → postgres (data) → app → monitoring (observability)
+```
 
 ## Production Checklist
 

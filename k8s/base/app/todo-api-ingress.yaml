@@ -10,11 +10,9 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
-  # TODO: add a tls block with cert-manager ClusterIssuer annotation in prod.
-  # The prod overlay patches the host to the real domain but leaves this HTTP-only.
+  # TODO: add a tls block with cert-manager ClusterIssuer annotation.
   rules:
-    - host: todo.localhost
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

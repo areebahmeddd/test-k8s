@@ -6,12 +6,12 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
 
 | Service      | Image                       | Role                                    | Port |
 | ------------ | --------------------------- | --------------------------------------- | ---- |
+| Grafana      | `grafana/grafana:12.4.0`    | Unified dashboard UI                    | 3000 |
 | Prometheus   | `prom/prometheus:v3.10.0`   | Metrics collection and alerting         | 9090 |
 | Alertmanager | `prom/alertmanager:v0.31.0` | Alert routing and notification delivery | 9093 |
-| Grafana      | `grafana/grafana:12.4.0`    | Unified dashboard UI                    | 3000 |
 | Loki         | `grafana/loki:3.5.0`        | Log storage and querying                | 3100 |
-| Alloy        | `grafana/alloy:v1.14.0`     | Log collection and trace ingestion      | 4317 |
 | Tempo        | `grafana/tempo:2.8.0`       | Trace storage and querying              | 3200 |
+| Alloy        | `grafana/alloy:v1.14.0`     | Log collection and trace ingestion      | 4317 |
 
 ## Signal Flow
 
@@ -49,13 +49,6 @@ All configuration lives under `k8s/base/monitoring/`.
 
 ```
 k8s/base/monitoring/
-  alloy/
-    configmap.yaml       # River (Alloy) pipeline config
-    deployment.yaml
-    service.yaml
-    clusterrole.yaml
-    clusterrolebinding.yaml
-    serviceaccount.yaml
   grafana/
     configmap-datasources.yaml
     configmap-provisioning.yaml
@@ -64,10 +57,6 @@ k8s/base/monitoring/
     deployment.yaml
     service.yaml
     ingress.yaml
-  loki/
-    configmap.yaml
-    deployment.yaml
-    service.yaml
   prometheus/
     configmap.yaml       # prometheus.yml + alert-rules.yml
     deployment.yaml
@@ -76,11 +65,82 @@ k8s/base/monitoring/
   alertmanager/
     deployment.yaml
     service.yaml
+  loki/
+    configmap.yaml
+    deployment.yaml
+    service.yaml
   tempo/
     configmap.yaml
     deployment.yaml
     service.yaml
+  alloy/
+    configmap.yaml       # River (Alloy) pipeline config
+    deployment.yaml
+    service.yaml
+    clusterrole.yaml
+    clusterrolebinding.yaml
+    serviceaccount.yaml
 ```
+
+## Grafana
+
+**Datasources:** `monitoring/grafana/provisioning/datasources/datasources.yml`
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+
+  - name: Loki
+    type: loki
+    uid: loki
+    url: http://loki:3100
+    editable: false
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki
+        filterByTraceID: true
+```
+
+All three data sources are provisioned automatically at startup. No manual Grafana configuration is needed.
+
+`editable: false` prevents saving changes through the UI — the config files remain the single source of truth.
+
+`tracesToLogs` enables cross-pillar correlation: in the Tempo trace view, a button appears that jumps to Loki filtered by the current trace ID. This works because the API's OTel SDK injects the trace ID into log lines.
+
+`isDefault: true` on Prometheus means new Grafana panels default to it.
+
+**Dashboards:** `monitoring/grafana/provisioning/dashboards/dashboards.yml`
+
+```yaml
+apiVersion: 1
+
+providers:
+  - name: todo-dashboards
+    orgId: 1
+    folder: Todo App
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+```
+
+Every `.json` file under `monitoring/grafana/dashboards/` is imported automatically. Currently one dashboard is included: `api-metrics.json`, which displays HTTP request rates, error rates, and latency percentiles for the API.
+
+Grafana stores its own data (users, preferences, saved state) in the `grafana_data` volume.
 
 ## Prometheus
 
@@ -222,6 +282,44 @@ schema_config:
 
 `replication_factor: 1` and `store: inmemory` are correct for a single-instance deployment. No external Consul or etcd is needed.
 
+## Tempo
+
+**Config:** `monitoring/tempo/tempo-config.yml`
+
+```yaml
+server:
+  http_listen_port: 3200
+  log_level: warn
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+
+ingester:
+  max_block_duration: 5m
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+```
+
+Tempo runs in single-binary mode (`all` target), which starts all components — distributor, ingester, querier, compactor — in a single process. This is the correct mode for a single-node deployment.
+
+`distributor.receivers.otlp.http.endpoint: 0.0.0.0:4318` — listens on all network interfaces so the OTel Collector can reach it across the Docker bridge network. The default (`localhost:4318`) would reject cross-container connections.
+
+`max_block_duration: 5m` overrides the 30-minute default. Spans flow: OTel Collector → Tempo distributor → WAL on disk → in-memory ingester → flushed to parquet blocks every 5 minutes. Grafana can query both in-memory and flushed blocks.
+
+The WAL at `/var/tempo/wal` ensures spans are not lost if Tempo restarts mid-block.
+
+`backend: local` stores trace blocks on the local filesystem, mounted to the `tempo_data` volume.
+
 ## Alloy
 
 **Config:** `k8s/base/monitoring/alloy/configmap.yaml` (key: `config.alloy`)
@@ -284,111 +382,13 @@ Alloy receives traces from the API over gRPC OTLP (port 4317), batches them, and
 
 The API is configured with `OTEL_EXPORTER_OTLP_ENDPOINT=alloy.monitoring.svc.cluster.local:4317`.
 
-## Tempo
-
-**Config:** `monitoring/tempo/tempo-config.yml`
-
-```yaml
-server:
-  http_listen_port: 3200
-  log_level: warn
-
-distributor:
-  receivers:
-    otlp:
-      protocols:
-        http:
-          endpoint: 0.0.0.0:4318
-
-ingester:
-  max_block_duration: 5m
-
-storage:
-  trace:
-    backend: local
-    local:
-      path: /var/tempo/traces
-    wal:
-      path: /var/tempo/wal
-```
-
-Tempo runs in single-binary mode (`all` target), which starts all components — distributor, ingester, querier, compactor — in a single process. This is the correct mode for a single-node deployment.
-
-`distributor.receivers.otlp.http.endpoint: 0.0.0.0:4318` — listens on all network interfaces so the OTel Collector can reach it across the Docker bridge network. The default (`localhost:4318`) would reject cross-container connections.
-
-`max_block_duration: 5m` overrides the 30-minute default. Spans flow: OTel Collector → Tempo distributor → WAL on disk → in-memory ingester → flushed to parquet blocks every 5 minutes. Grafana can query both in-memory and flushed blocks.
-
-The WAL at `/var/tempo/wal` ensures spans are not lost if Tempo restarts mid-block.
-
-`backend: local` stores trace blocks on the local filesystem, mounted to the `tempo_data` volume.
-
-## Grafana
-
-**Datasources:** `monitoring/grafana/provisioning/datasources/datasources.yml`
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    uid: prometheus
-    url: http://prometheus:9090
-    isDefault: true
-    editable: false
-
-  - name: Loki
-    type: loki
-    uid: loki
-    url: http://loki:3100
-    editable: false
-
-  - name: Tempo
-    type: tempo
-    uid: tempo
-    url: http://tempo:3200
-    editable: false
-    jsonData:
-      tracesToLogs:
-        datasourceUid: loki
-        filterByTraceID: true
-```
-
-All three data sources are provisioned automatically at startup. No manual Grafana configuration is needed.
-
-`editable: false` prevents saving changes through the UI — the config files remain the single source of truth.
-
-`tracesToLogs` enables cross-pillar correlation: in the Tempo trace view, a button appears that jumps to Loki filtered by the current trace ID. This works because the API's OTel SDK injects the trace ID into log lines.
-
-`isDefault: true` on Prometheus means new Grafana panels default to it.
-
-**Dashboards:** `monitoring/grafana/provisioning/dashboards/dashboards.yml`
-
-```yaml
-apiVersion: 1
-
-providers:
-  - name: todo-dashboards
-    orgId: 1
-    folder: Todo App
-    type: file
-    disableDeletion: true
-    updateIntervalSeconds: 10
-    options:
-      path: /var/lib/grafana/dashboards
-```
-
-Every `.json` file under `monitoring/grafana/dashboards/` is imported automatically. Currently one dashboard is included: `api-metrics.json`, which displays HTTP request rates, error rates, and latency percentiles for the API.
-
-Grafana stores its own data (users, preferences, saved state) in the `grafana_data` volume.
-
 ## Access
 
-| Interface    | URL                     | Credentials      | Notes                                |
-| ------------ | ----------------------- | ---------------- | ------------------------------------ |
-| Grafana      | `http://localhost:3000` | admin / admin123 | Unified UI — metrics, logs, traces   |
-| Prometheus   | `http://localhost:9090` | —                | Query interface and alert state      |
-| Alloy        | `http://localhost:12345`| —                | Pipeline graph, component health     |
-| Alertmanager | `http://localhost:9093` | —                | Active alerts and silence management |
-| Loki         | `http://localhost:3100` | —                | No browser UI — query via Grafana    |
-| Tempo        | `http://localhost:3200` | —                | No browser UI — query via Grafana    |
+| Interface    | URL                      | Credentials      | Notes                                |
+| ------------ | ------------------------ | ---------------- | ------------------------------------ |
+| Grafana      | `http://localhost:3000`  | admin / admin123 | Unified UI — metrics, logs, traces   |
+| Prometheus   | `http://localhost:9090`  | —                | Query interface and alert state      |
+| Alertmanager | `http://localhost:9093`  | —                | Active alerts and silence management |
+| Alloy        | `http://localhost:12345` | —                | Pipeline graph, component health     |
+| Loki         | `http://localhost:3100`  | —                | No browser UI — query via Grafana    |
+| Tempo        | `http://localhost:3200`  | —                | No browser UI — query via Grafana    |

@@ -10,9 +10,9 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
+  # TODO: add a tls block with cert-manager ClusterIssuer.
   rules:
-    - host: grafana.localhost
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

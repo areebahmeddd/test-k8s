@@ -2,7 +2,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: todo-api
-  namespace: todo-app
   labels:
     app.kubernetes.io/name: todo-api
     app.kubernetes.io/instance: todo-api

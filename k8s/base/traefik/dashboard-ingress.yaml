@@ -10,9 +10,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
+  # TODO: remove or restrict this ingress — the dashboard has no authentication.
+  # (see --api.insecure TODO in deployment.yaml)
   rules:
-    - host: traefik.localhost
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

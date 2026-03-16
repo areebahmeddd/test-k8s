@@ -39,7 +39,7 @@ data:
       configs:
         - from: 2020-10-24
           store: tsdb
-          object_store: filesystem
+          object_store: filesystem # TODO: replace with an S3-compatible object store.
           schema: v13
           index:
             prefix: index_

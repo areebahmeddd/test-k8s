@@ -16,8 +16,8 @@ spec:
     targetRevision: "0.27.1"
     helm:
       releaseName: cloudnative-pg
+      # TODO: increase replicaCount to 2 in a real multi-node production environment.
       values: |
-        # TODO: increase replicaCount to 2 in a real multi-node production environment
         replicaCount: 1
   destination:
     server: https://kubernetes.default.svc

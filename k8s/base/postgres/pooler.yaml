@@ -18,6 +18,15 @@ spec:
   # Patched per overlay: dev → 1, prod → 2
   instances: 1
 
+  pgbouncer:
+    # session mode: safe for SQLAlchemy async (transaction mode breaks prepared statements)
+    poolMode: session
+    parameters:
+      max_client_conn: "100"
+      default_pool_size: "25"
+      server_idle_timeout: "600"
+      query_wait_timeout: "120"
+
   template:
     spec:
       containers:
@@ -29,12 +38,3 @@ spec:
             limits:
               cpu: "200m"
               memory: "256Mi"
-
-  pgbouncer:
-    # session mode: safe for SQLAlchemy async (transaction mode breaks prepared statements)
-    poolMode: session
-    parameters:
-      max_client_conn: "100"
-      default_pool_size: "25"
-      server_idle_timeout: "600"
-      query_wait_timeout: "120"

@@ -10,9 +10,9 @@ resources:
   - alloy/clusterrole.yaml
   - alloy/clusterrolebinding.yaml
   - alloy/configmap.yaml
-  - alloy/service.yaml
-  - alloy/ingress.yaml
   - alloy/deployment.yaml
+  - alloy/service.yaml
+  # alloy/ingress.yaml is only loaded by the prod overlay (requires a host to avoid routing conflicts).
   # Storage
   - loki/configmap.yaml
   - loki/deployment.yaml
@@ -23,7 +23,7 @@ resources:
   - prometheus/configmap.yaml
   - prometheus/deployment.yaml
   - prometheus/service.yaml
-  - prometheus/ingress.yaml
+  # prometheus/ingress.yaml is only loaded by the prod overlay (requires a host to avoid routing conflicts).
   # Alerting
   - alertmanager/deployment.yaml
   - alertmanager/service.yaml
@@ -32,7 +32,7 @@ resources:
   - grafana/configmap-provisioning.yaml
   - grafana/deployment.yaml
   - grafana/service.yaml
-  - grafana/ingress.yaml
+  # grafana/ingress.yaml is only loaded by the prod overlay (requires a host to avoid routing conflicts).
 
 configMapGenerator:
   - name: grafana-dashboards

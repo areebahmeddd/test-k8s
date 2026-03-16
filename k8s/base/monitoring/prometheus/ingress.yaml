@@ -10,11 +10,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
-  # TODO: add a Traefik basic-auth middleware in prod — Prometheus has no built-in
+  # TODO: add a Traefik basic-auth middleware — Prometheus has no built-in
   # authentication and exposes all metrics and alert rules publicly.
   rules:
-    - host: prometheus.localhost
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix
