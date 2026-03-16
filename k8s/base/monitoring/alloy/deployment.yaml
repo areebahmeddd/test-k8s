@@ -78,4 +78,6 @@ spec:
           configMap:
             name: alloy-config
         - name: storage
+          # TODO: replace with a PersistentVolumeClaim in prod — position cursors
+          # are lost on restart, causing brief duplicate log ingestion into Loki.
           emptyDir: {}

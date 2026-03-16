@@ -66,4 +66,6 @@ spec:
           configMap:
             name: loki-config
         - name: data
+          # TODO: replace with a PersistentVolumeClaim in prod — all ingested logs
+          # are lost on every pod restart with emptyDir.
           emptyDir: {}

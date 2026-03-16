@@ -89,4 +89,6 @@ spec:
           configMap:
             name: grafana-dashboards
         - name: data
+          # TODO: replace with a PersistentVolumeClaim in prod — any dashboards or
+          # settings saved through the UI are lost on every pod restart with emptyDir.
           emptyDir: {}

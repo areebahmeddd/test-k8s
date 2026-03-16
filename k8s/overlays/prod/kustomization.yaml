@@ -59,3 +59,7 @@ patches:
     target:
       kind: Ingress
       name: traefik-dashboard
+
+  # TODO: add host patch for alloy ingress (alloy.1mindlabs.org or similar) and
+  # add TLS + auth middleware patches for all internal-tool ingresses (prometheus,
+  # alloy, traefik-dashboard) once cert-manager and a ClusterIssuer are in place.

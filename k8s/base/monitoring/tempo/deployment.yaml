@@ -70,4 +70,6 @@ spec:
           configMap:
             name: tempo-config
         - name: data
+          # TODO: replace with a PersistentVolumeClaim in prod — trace blocks and
+          # the WAL are lost on every pod restart with emptyDir.
           emptyDir: {}

@@ -10,6 +10,8 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
+  # TODO: add a Traefik basic-auth middleware in prod — Alloy UI exposes pipeline
+  # internals, component configs, and debug endpoints without authentication.
   rules:
     - host: alloy.localhost
       http:

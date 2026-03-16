@@ -69,4 +69,6 @@ spec:
           configMap:
             name: prometheus-config
         - name: data
+          # TODO: replace with a PersistentVolumeClaim in prod — the TSDB (all
+          # scraped metrics history) is lost on every pod restart with emptyDir.
           emptyDir: {}

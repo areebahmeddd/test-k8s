@@ -11,6 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   replicas: 1
+  # TODO: increase to at least 2 replicas in prod for ingress-controller HA
   selector:
     matchLabels:
       app.kubernetes.io/name: traefik
@@ -36,6 +37,8 @@ spec:
             - --providers.kubernetesingress.ingressclass=traefik
             # API & Dashboard
             - --api.dashboard=true
+            # TODO: remove --api.insecure in prod — use a Traefik middleware with
+            # basic-auth or OAuth instead, or restrict the dashboard ingress to internal IPs only.
             - --api.insecure=true
             - --entrypoints.traefik.address=:9000
             # Health check endpoint served on traefik entrypoint
