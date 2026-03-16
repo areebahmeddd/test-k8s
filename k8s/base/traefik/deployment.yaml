@@ -10,8 +10,13 @@ metadata:
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
 spec:
-  replicas: 1
   # TODO: increase to at least 2 replicas for ingress-controller HA.
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0 # hostPort requires old pod to leave before new one schedules
   selector:
     matchLabels:
       app.kubernetes.io/name: traefik
@@ -28,10 +33,10 @@ spec:
       serviceAccountName: traefik
       nodeSelector:
         ingress-ready: "true"
-      # securityContext:
-      #   runAsNonRoot: true
-      #   runAsUser: 65532
-      #   runAsGroup: 65532
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
       containers:
         - name: traefik
           image: traefik:v3.6.10
@@ -81,8 +86,8 @@ spec:
             limits:
               cpu: "500m"
               memory: "256Mi"
-          # securityContext:
-          #   allowPrivilegeEscalation: false
-          #   capabilities:
-          #     drop: ["ALL"]
-          #     add: ["NET_BIND_SERVICE"]  # required to bind :80 as non-root
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"]  # required to bind :80 as non-root

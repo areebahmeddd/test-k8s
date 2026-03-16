@@ -24,11 +24,11 @@ spec:
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
     spec:
-      # securityContext:
-      #   runAsNonRoot: true
-      #   runAsUser: 472
-      #   runAsGroup: 472
-      #   fsGroup: 472
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
       containers:
         - name: grafana
           image: grafana/grafana:12.4.1
@@ -83,10 +83,10 @@ spec:
             limits:
               cpu: "200m"
               memory: "512Mi"
-          # securityContext:
-          #   allowPrivilegeEscalation: false
-          #   capabilities:
-          #     drop: ["ALL"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       volumes:
         - name: datasources
           configMap:

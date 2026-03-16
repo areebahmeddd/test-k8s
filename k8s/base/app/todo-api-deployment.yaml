@@ -25,10 +25,10 @@ spec:
         app.kubernetes.io/managed-by: kustomize
     spec:
       serviceAccountName: todo-api
-      # securityContext:
-      #   runAsNonRoot: true
-      #   runAsUser: 1000
-      #   runAsGroup: 1000
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
         - name: todo-api
           image: areebahmeddd/todo-api:1.0.0
@@ -63,7 +63,7 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
-          # securityContext:
-          #   allowPrivilegeEscalation: false
-          #   capabilities:
-          #     drop: ["ALL"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

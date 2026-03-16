@@ -24,11 +24,11 @@ spec:
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
     spec:
-      # securityContext:
-      #   runAsNonRoot: true
-      #   runAsUser: 10001
-      #   runAsGroup: 10001
-      #   fsGroup: 10001
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
       containers:
         - name: tempo
           image: grafana/tempo:2.10.2
@@ -70,10 +70,10 @@ spec:
             limits:
               cpu: "200m"
               memory: "512Mi"
-          # securityContext:
-          #   allowPrivilegeEscalation: false
-          #   capabilities:
-          #     drop: ["ALL"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       volumes:
         - name: config
           configMap:
