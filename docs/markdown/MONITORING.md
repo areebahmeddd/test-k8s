@@ -6,11 +6,11 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
 
 | Service      | Image                       | Role                                    | Port |
 | ------------ | --------------------------- | --------------------------------------- | ---- |
-| Grafana      | `grafana/grafana:12.4.0`    | Unified dashboard UI                    | 3000 |
+| Grafana      | `grafana/grafana:12.4.1`    | Unified dashboard UI                    | 3000 |
 | Prometheus   | `prom/prometheus:v3.10.0`   | Metrics collection and alerting         | 9090 |
-| Alertmanager | `prom/alertmanager:v0.31.0` | Alert routing and notification delivery | 9093 |
-| Loki         | `grafana/loki:3.5.0`        | Log storage and querying                | 3100 |
-| Tempo        | `grafana/tempo:2.8.0`       | Trace storage and querying              | 3200 |
+| Alertmanager | `prom/alertmanager:v0.31.1` | Alert routing and notification delivery | 9093 |
+| Loki         | `grafana/loki:3.6.7`        | Log storage and querying                | 3100 |
+| Tempo        | `grafana/tempo:2.10.2`      | Trace storage and querying              | 3200 |
 | Alloy        | `grafana/alloy:v1.14.0`     | Log collection and trace ingestion      | 4317 |
 
 ## Signal Flow

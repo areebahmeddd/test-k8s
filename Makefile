@@ -2,7 +2,7 @@
 
 .PHONY: up down quality test coverage migrate upgrade downgrade \
         minikube-create minikube-delete minikube-load minikube-tunnel docker-pull \
-        k8s-build k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
+        k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
         check-sops sops-encrypt sops-decrypt \
         db-reset cnpg-status \
         validate validate-k8s validate-schema validate-sops validate-policies
@@ -67,25 +67,25 @@ docker-pull:
 	docker pull areebahmeddd/todo-api:1.0.0
 	docker pull ghcr.io/cloudnative-pg/postgresql:18
 	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
-	docker pull traefik:v3.6
-	docker pull grafana/grafana:12.4.0
-	docker pull grafana/loki:3.5.0
+	docker pull traefik:v3.6.10
+	docker pull grafana/grafana:12.4.1
+	docker pull grafana/loki:3.6.7
 	docker pull grafana/alloy:v1.14.0
-	docker pull grafana/tempo:2.8.0
+	docker pull grafana/tempo:2.10.2
 	docker pull prom/prometheus:v3.10.0
-	docker pull prom/alertmanager:v0.31.0
+	docker pull prom/alertmanager:v0.31.1
 
 minikube-load: docker-pull
 	minikube image load areebahmeddd/todo-api:1.0.0
 	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
 	minikube image load ghcr.io/cloudnative-pg/postgresql:18
-	minikube image load traefik:v3.6
-	minikube image load grafana/grafana:12.4.0
-	minikube image load grafana/loki:3.5.0
+	minikube image load traefik:v3.6.10
+	minikube image load grafana/grafana:12.4.1
+	minikube image load grafana/loki:3.6.7
 	minikube image load grafana/alloy:v1.14.0
-	minikube image load grafana/tempo:2.8.0
+	minikube image load grafana/tempo:2.10.2
 	minikube image load prom/prometheus:v3.10.0
-	minikube image load prom/alertmanager:v0.31.0
+	minikube image load prom/alertmanager:v0.31.1
 
 minikube-tunnel:
 	minikube tunnel
@@ -93,9 +93,6 @@ minikube-tunnel:
 # ============================================
 # Kubernetes (Kustomize)
 # ============================================
-
-k8s-build:
-	docker build -t areebahmeddd/todo-api:1.0.0 .
 
 k8s-deploy: check-sops
 	# Step 1: Apply ArgoCD (two passes — first installs CRDs, second applies Applications)

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: tempo
     app.kubernetes.io/instance: tempo
-    app.kubernetes.io/version: "2.8.0"
+    app.kubernetes.io/version: "2.10.2"
     app.kubernetes.io/component: tracing
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: tempo
         app.kubernetes.io/instance: tempo
-        app.kubernetes.io/version: "2.8.0"
+        app.kubernetes.io/version: "2.10.2"
         app.kubernetes.io/component: tracing
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -31,7 +31,7 @@ spec:
       #   fsGroup: 10001
       containers:
         - name: tempo
-          image: grafana/tempo:2.8.0
+          image: grafana/tempo:2.10.2
           imagePullPolicy: IfNotPresent
           args:
             - -config.file=/etc/tempo.yaml
