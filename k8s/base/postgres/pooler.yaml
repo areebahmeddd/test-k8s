@@ -12,12 +12,9 @@ metadata:
 spec:
   cluster:
     name: todo-db
-
   type: rw
-
   # Patched per overlay: dev → 1, prod → 2
   instances: 1
-
   pgbouncer:
     # session mode: safe for SQLAlchemy async (transaction mode breaks prepared statements)
     poolMode: session
@@ -26,7 +23,6 @@ spec:
       default_pool_size: "25"
       server_idle_timeout: "600"
       query_wait_timeout: "120"
-
   template:
     spec:
       containers:

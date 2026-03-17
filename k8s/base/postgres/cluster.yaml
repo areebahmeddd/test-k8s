@@ -13,10 +13,8 @@ metadata:
 spec:
   # Patched per overlay: dev → 1, prod → 3
   instances: 1
-
   imageName: ghcr.io/cloudnative-pg/postgresql:18
   imagePullPolicy: IfNotPresent
-
   # todo-db-secret must contain: stringData.password: <value>
   bootstrap:
     initdb:
@@ -26,14 +24,11 @@ spec:
         name: todo-db-secret
       dataChecksums: true
       encoding: UTF8
-
   # Patched per overlay: dev → 5Gi, prod → 50Gi
   storage:
     size: 5Gi
-
   walStorage:
     size: 1Gi
-
   resources:
     requests:
       cpu: "250m"
@@ -41,12 +36,9 @@ spec:
     limits:
       cpu: "500m"
       memory: "1Gi"
-
   replicationSlots:
     highAvailability:
       enabled: true
-
   # Patched per overlay: dev → false, prod → true
   enablePDB: false
-
   logLevel: info

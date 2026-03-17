@@ -1,7 +1,5 @@
 # Monitoring
 
-The monitoring stack covers all three pillars of observability: metrics, logs, and traces. Each pillar has a dedicated storage backend. Grafana is the single interface that queries all three.
-
 ## Stack Overview
 
 | Service      | Image                       | Role                                    | Port |
@@ -41,11 +39,7 @@ The monitoring stack covers all three pillars of observability: metrics, logs, a
                                              └─────────┘
 ```
 
-Alloy collects logs from all Kubernetes pods via the Kubernetes API (`loki.source.kubernetes`) and receives traces from the API over gRPC OTLP (port 4317). It requires no node filesystem access and runs as a single Deployment.
-
 ## Configuration Files
-
-All configuration lives under `k8s/base/monitoring/`.
 
 ```
 k8s/base/monitoring/
@@ -389,6 +383,6 @@ The API is configured with `OTEL_EXPORTER_OTLP_ENDPOINT=alloy.monitoring.svc.clu
 | Grafana      | `http://localhost:3000`  | admin / admin123 | Unified UI — metrics, logs, traces   |
 | Prometheus   | `http://localhost:9090`  | —                | Query interface and alert state      |
 | Alertmanager | `http://localhost:9093`  | —                | Active alerts and silence management |
-| Alloy        | `http://localhost:12345` | —                | Pipeline graph, component health     |
 | Loki         | `http://localhost:3100`  | —                | No browser UI — query via Grafana    |
 | Tempo        | `http://localhost:3200`  | —                | No browser UI — query via Grafana    |
+| Alloy        | `http://localhost:12345` | —                | Pipeline graph, component health     |

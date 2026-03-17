@@ -5,7 +5,6 @@ namespace: monitoring
 
 resources:
   - namespace.yaml
-  # Collectors
   - alloy/serviceaccount.yaml
   - alloy/clusterrole.yaml
   - alloy/clusterrolebinding.yaml
@@ -13,7 +12,6 @@ resources:
   - alloy/deployment.yaml
   - alloy/service.yaml
   # tool-ingresses/ kustomization (alloy, grafana, prometheus ingresses) is only used by the prod overlay.
-  # Storage
   - loki/configmap.yaml
   - loki/deployment.yaml
   - loki/service.yaml
@@ -23,11 +21,8 @@ resources:
   - prometheus/configmap.yaml
   - prometheus/deployment.yaml
   - prometheus/service.yaml
-
-  # Alerting
   - alertmanager/deployment.yaml
   - alertmanager/service.yaml
-  # Visualization
   - grafana/configmap-datasources.yaml
   - grafana/configmap-provisioning.yaml
   - grafana/deployment.yaml
