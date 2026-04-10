@@ -4,12 +4,12 @@
 
 | Service      | Image                       | Role                                    | Port |
 | ------------ | --------------------------- | --------------------------------------- | ---- |
-| Grafana      | `grafana/grafana:12.4.1`    | Unified dashboard UI                    | 3000 |
-| Prometheus   | `prom/prometheus:v3.10.0`   | Metrics collection and alerting         | 9090 |
-| Alertmanager | `prom/alertmanager:v0.31.1` | Alert routing and notification delivery | 9093 |
-| Loki         | `grafana/loki:3.6.7`        | Log storage and querying                | 3100 |
-| Tempo        | `grafana/tempo:2.10.2`      | Trace storage and querying              | 3200 |
-| Alloy        | `grafana/alloy:v1.14.0`     | Log collection and trace ingestion      | 4317 |
+| Grafana      | `grafana/grafana:12.4.2`    | Unified dashboard UI                    | 3000 |
+| Prometheus   | `prom/prometheus:v3.11.1`   | Metrics collection and alerting         | 9090 |
+| Alertmanager | `prom/alertmanager:v0.32.0` | Alert routing and notification delivery | 9093 |
+| Loki         | `grafana/loki:3.7.1`        | Log storage and querying                | 3100 |
+| Tempo        | `grafana/tempo:2.10.3`      | Trace storage and querying              | 3200 |
+| Alloy        | `grafana/alloy:v1.15.0`     | Log collection and trace ingestion      | 4317 |
 
 ## Signal Flow
 
@@ -30,7 +30,7 @@
                       alert│          logs│       traces│
                       ┌─────▼──────┐  ┌───┴─────────────┴──┐
                       │ALERTMANAGER│  │        ALLOY       │
-                      │  :9093     │  │logs  :—  otlp :4317│
+                      │  :9093     │  │logs  :-  otlp :4317│
                       └────────────┘  └────────────────────┘
                                                   │receives traces
                                              ┌────▼────┐
@@ -110,7 +110,7 @@ datasources:
 
 All three data sources are provisioned automatically at startup. No manual Grafana configuration is needed.
 
-`editable: false` prevents saving changes through the UI — the config files remain the single source of truth.
+`editable: false` prevents saving changes through the UI - the config files remain the single source of truth.
 
 `tracesToLogs` enables cross-pillar correlation: in the Tempo trace view, a button appears that jumps to Loki filtered by the current trace ID. This works because the API's OTel SDK injects the trace ID into log lines.
 
@@ -207,13 +207,13 @@ receivers:
 
 Alertmanager receives alerts from Prometheus and routes them to Slack.
 
-`group_wait: 30s` — waits 30 seconds before sending the first notification, allowing related alerts to arrive and be bundled into one message.
+`group_wait: 30s` - waits 30 seconds before sending the first notification, allowing related alerts to arrive and be bundled into one message.
 
-`group_interval: 5m` — sends an update every 5 minutes while the group is still firing.
+`group_interval: 5m` - sends an update every 5 minutes while the group is still firing.
 
-`repeat_interval: 1h` — re-sends an unresolved alert every hour.
+`repeat_interval: 1h` - re-sends an unresolved alert every hour.
 
-`send_resolved: true` — sends a recovery notification when the condition clears.
+`send_resolved: true` - sends a recovery notification when the condition clears.
 
 The message colour is templated: red for critical, yellow for warning, green for resolved.
 
@@ -266,7 +266,7 @@ schema_config:
         period: 24h
 ```
 
-`auth_enabled: false` runs Loki in single-tenant mode — no `X-Scope-OrgID` header required.
+`auth_enabled: false` runs Loki in single-tenant mode - no `X-Scope-OrgID` header required.
 
 `log_level: warn` suppresses the verbose info logs Loki emits on every query.
 
@@ -304,9 +304,9 @@ storage:
       path: /var/tempo/wal
 ```
 
-Tempo runs in single-binary mode (`all` target), which starts all components — distributor, ingester, querier, compactor — in a single process. This is the correct mode for a single-node deployment.
+Tempo runs in single-binary mode (`all` target), which starts all components - distributor, ingester, querier, compactor - in a single process. This is the correct mode for a single-node deployment.
 
-`distributor.receivers.otlp.http.endpoint: 0.0.0.0:4318` — listens on all network interfaces so the OTel Collector can reach it across the Docker bridge network. The default (`localhost:4318`) would reject cross-container connections.
+`distributor.receivers.otlp.http.endpoint: 0.0.0.0:4318` - listens on all network interfaces so the OTel Collector can reach it across the Docker bridge network. The default (`localhost:4318`) would reject cross-container connections.
 
 `max_block_duration: 5m` overrides the 30-minute default. Spans flow: OTel Collector → Tempo distributor → WAL on disk → in-memory ingester → flushed to parquet blocks every 5 minutes. Grafana can query both in-memory and flushed blocks.
 
@@ -351,7 +351,7 @@ loki.write "loki" {
 }
 ```
 
-`loki.source.kubernetes` tails pod logs via the Kubernetes API — no DaemonSet, no `hostPath` mounts, and no privileged container required. A single Alloy Deployment serves the whole cluster.
+`loki.source.kubernetes` tails pod logs via the Kubernetes API - no DaemonSet, no `hostPath` mounts, and no privileged container required. A single Alloy Deployment serves the whole cluster.
 
 The `discovery.relabel` rules map Kubernetes pod metadata to Loki stream labels. In Grafana, logs can be queried with selectors like `{namespace="todo-app"}` or `{app="todo-api"}`.
 
@@ -380,9 +380,9 @@ The API is configured with `OTEL_EXPORTER_OTLP_ENDPOINT=alloy.monitoring.svc.clu
 
 | Interface    | URL                      | Credentials      | Notes                                |
 | ------------ | ------------------------ | ---------------- | ------------------------------------ |
-| Grafana      | `http://localhost:3000`  | admin / admin123 | Unified UI — metrics, logs, traces   |
-| Prometheus   | `http://localhost:9090`  | —                | Query interface and alert state      |
-| Alertmanager | `http://localhost:9093`  | —                | Active alerts and silence management |
-| Loki         | `http://localhost:3100`  | —                | No browser UI — query via Grafana    |
-| Tempo        | `http://localhost:3200`  | —                | No browser UI — query via Grafana    |
-| Alloy        | `http://localhost:12345` | —                | Pipeline graph, component health     |
+| Grafana      | `http://localhost:3000`  | admin / admin123 | Unified UI - metrics, logs, traces   |
+| Prometheus   | `http://localhost:9090`  | -                | Query interface and alert state      |
+| Alertmanager | `http://localhost:9093`  | -                | Active alerts and silence management |
+| Loki         | `http://localhost:3100`  | -                | No browser UI - query via Grafana    |
+| Tempo        | `http://localhost:3200`  | -                | No browser UI - query via Grafana    |
+| Alloy        | `http://localhost:12345` | -                | Pipeline graph, component health     |

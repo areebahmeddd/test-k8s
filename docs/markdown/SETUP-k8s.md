@@ -2,22 +2,24 @@
 
 ## Prerequisites
 
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) — Kubernetes CLI
-- [minikube](https://minikube.sigs.k8s.io/docs/start/) — local single-node cluster
-- [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) — manifest templating
-- [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) — secret encryption
-- Docker — to build the API image
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) - Kubernetes CLI
+- [minikube](https://minikube.sigs.k8s.io/docs/start/) - local single-node cluster (>= v1.33, Calico CNI)
+- [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) - manifest templating
+- [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) - secret encryption
+- Docker - to build the API image
+
+> **CNI requirement:** the default minikube CNI (`kindnet`) does not enforce `NetworkPolicy`. This project starts minikube with `--cni=calico` so network policies are enforced. See [NETWORKING.md](NETWORKING.md) for details.
 
 ## Cluster Layout
 
 Four namespaces:
 
-| Namespace    | What lives there                                                                        |
-| ------------ | --------------------------------------------------------------------------------------- |
-| `argocd`     | ArgoCD server, application controller, repo server, dex, redis                          |
-| `traefik`    | Traefik ingress controller (LoadBalancer service)                                       |
-| `todo-app`   | `todo-api` Deployment + HPA, `todo-db` StatefulSet, Services, ConfigMap, ServiceAccount |
-| `monitoring` | Prometheus, Alertmanager, Grafana, Loki, Alloy, Tempo                                   |
+| Namespace    | What lives there                                                                                           |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `argocd`     | ArgoCD server, application controller, repo server, dex, redis                                             |
+| `traefik`    | Traefik ingress controller (LoadBalancer service)                                                          |
+| `todo-app`   | `todo-api` Deployment + HPA, `todo-db` CloudNativePG Cluster + Pooler, Services, ConfigMap, ServiceAccount |
+| `monitoring` | Prometheus, Alertmanager, Grafana, Loki, Alloy, Tempo                                                      |
 
 Two Kustomize overlays share the same base:
 
@@ -48,6 +50,8 @@ k8s/
 make minikube-create
 ```
 
+This runs `minikube start --cni=calico --memory=4096 --cpus=4`, waits for Calico nodes to become `Ready`, then labels the node `ingress-ready=true` for Traefik.
+
 ### 2. Build the API image
 
 ```bash
@@ -56,7 +60,7 @@ make k8s-build
 
 ### 3. Load all images into minikube
 
-minikube runs its own internal Docker daemon — images on your host are not visible inside the cluster without loading them explicitly.
+minikube runs its own internal Docker daemon - images on your host are not visible inside the cluster without loading them explicitly.
 
 ```bash
 make minikube-load
@@ -83,13 +87,13 @@ make k8s-deploy OVERLAY=prod
 
 What `k8s-deploy` does in order:
 
-1. Applies ArgoCD twice with `--server-side` — first pass registers CRDs, second pass applies the `Application` resources that depend on those CRDs.
+1. Applies ArgoCD twice with `--server-side` - first pass registers CRDs, second pass applies the `Application` resources that depend on those CRDs.
 2. Renders the overlay with `kustomize build` and pipes it to `kubectl apply`.
-3. Decrypts each secret file with `sops -d` and applies it directly — plaintext never touches disk.
+3. Decrypts each secret file with `sops -d` and applies it directly - plaintext never touches disk.
 
 ### 6. Enable `*.localhost` routing
 
-> **Dev overlay only** — this step is specific to minikube. A prod cluster with a real domain and DNS does not need it.
+> **Dev overlay only** - this step is specific to minikube. A prod cluster with a real domain and DNS does not need it.
 
 #### 6a. Add hosts file entries
 
@@ -119,7 +123,7 @@ Traefik is a `LoadBalancer` service. In minikube, `LoadBalancer` services have `
 Run this **once in a dedicated elevated window and leave it open**:
 
 ```powershell
-# PowerShell — accepts a UAC prompt
+# PowerShell - accepts a UAC prompt
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "minikube tunnel" -Verb RunAs
 ```
 
@@ -143,12 +147,12 @@ make k8s-status
 
 | Service    | URL                                   | Credentials      |
 | ---------- | ------------------------------------- | ---------------- |
-| todo-api   | `http://todo.localhost`               | —                |
+| todo-api   | `http://todo.localhost`               | -                |
 | ArgoCD     | `http://argocd.localhost`             | admin / admin123 |
 | Grafana    | `http://grafana.localhost`            | admin / admin123 |
-| Prometheus | `http://prometheus.localhost`         | —                |
-| Alloy      | `http://alloy.localhost`              | —                |
-| Traefik    | `http://traefik.localhost/dashboard/` | —                |
+| Prometheus | `http://prometheus.localhost`         | -                |
+| Alloy      | `http://alloy.localhost`              | -                |
+| Traefik    | `http://traefik.localhost/dashboard/` | -                |
 
 ### 8. Tear down
 
@@ -169,7 +173,7 @@ k8s/overlays/dev/secrets/           k8s/overlays/prod/secrets/
   alertmanager-secret.yaml            alertmanager-secret.yaml
 ```
 
-Each file holds `stringData` fields encrypted with `ENC[AES256_GCM,...]`. Running `sops -d <file>` decrypts it in memory — nothing is written to disk.
+Each file holds `stringData` fields encrypted with `ENC[AES256_GCM,...]`. Running `sops -d <file>` decrypts it in memory - nothing is written to disk.
 
 ```bash
 # Update a single field in an encrypted file (no full decrypt needed)
@@ -197,7 +201,7 @@ argocd login argocd.localhost:80 --username admin --insecure
 argocd account update-password
 ```
 
-Then delete the auto-generated secret — it is no longer needed and should not remain in the cluster:
+Then delete the auto-generated secret - it is no longer needed and should not remain in the cluster:
 
 ```bash
 kubectl -n argocd delete secret argocd-initial-admin-secret
@@ -207,11 +211,23 @@ kubectl -n argocd delete secret argocd-initial-admin-secret
 
 `todo-api` has an HPA configured in `k8s/overlays/prod/hpa-todo-api.yaml`:
 
-- `minReplicas: 2` — always at least two pods for availability
-- `maxReplicas: 4` — ceiling to keep costs bounded
-- CPU target: `70%` of the `100m` request — scales up when average CPU exceeds 70m per pod
+- `minReplicas: 2` - always at least two pods for availability
+- `maxReplicas: 4` - ceiling to keep costs bounded
+- CPU target: `70%` of the `100m` request - scales up when average CPU exceeds 70m per pod
 
-The Deployment `spec.replicas` field is intentionally absent from the prod overlay — HPA owns replica count entirely. Setting both would cause a conflict on every deployment.
+The Deployment `spec.replicas` field is intentionally absent from the prod overlay - HPA owns replica count entirely. Setting both would cause a conflict on every deployment.
+
+## Network Policies
+
+All four namespaces (`traefik`, `todo-app`, `monitoring`, `argocd`) are protected by a `default-deny-all` NetworkPolicy plus per-workload allow policies enforced by Calico.
+
+See [NETWORKING.md](NETWORKING.md) for the full traffic matrix, policy inventory, and design rationale.
+
+Verify policies are present after deploy:
+
+```bash
+kubectl get networkpolicies -A
+```
 
 ## Validation
 
@@ -226,12 +242,13 @@ make validate-policies  # OPA/conftest policy checks (resource limits, labels, i
 
 Conftest policies live in `policy/` and enforce:
 
-| Policy            | Rule                                                            |
-| ----------------- | --------------------------------------------------------------- |
-| `resource-limits` | Every container must declare CPU and memory limits              |
-| `required-labels` | Every workload must carry the four `app.kubernetes.io/*` labels |
-| `image-tags`      | Registry images (containing `/`) must not use `:latest`         |
-| `health-probes`   | Every Deployment must define readiness and liveness probes      |
+| Policy             | Rule                                                            |
+| ------------------ | --------------------------------------------------------------- |
+| `resource-limits`  | Every container must declare CPU and memory limits              |
+| `required-labels`  | Every workload must carry the four `app.kubernetes.io/*` labels |
+| `image-tags`       | Registry images (containing `/`) must not use `:latest`         |
+| `health-probes`    | Every Deployment must define readiness and liveness probes      |
+| `network-policies` | Every namespace must include a default-deny-all policy          |
 
 ## Database Migrations
 
@@ -253,13 +270,13 @@ kubectl logs -n monitoring deploy/prometheus --tail=50
 
 ## Monitoring
 
-See [MONITORING.md](MONITORING.md) for the full observability stack documentation — signal flow, configuration, alert rules, and Grafana dashboards.
+See [MONITORING.md](MONITORING.md) for the full observability stack documentation - signal flow, configuration, alert rules, and Grafana dashboards.
 
 Configuration files are stored in ConfigMaps under `k8s/base/monitoring/` and loaded into pods as volume mounts, equivalent to the bind mounts used in the Docker Compose setup.
 
 ## Resource Usage
 
-All resource requests and limits are declared in `k8s/base/`. The dev overlay does not override them — these figures apply to both overlays.
+All resource requests and limits are declared in `k8s/base/`. The dev overlay does not override them - these figures apply to both overlays.
 
 **Totals across all pods (single replica each):**
 
@@ -281,11 +298,11 @@ All resource requests and limits are declared in `k8s/base/`. The dev overlay do
 | `alloy`        | `monitoring` | 25m         | 128Mi       | 100m      | 256Mi     |
 | `alertmanager` | `monitoring` | 25m         | 64Mi        | 100m      | 128Mi     |
 
-> ArgoCD system pods (`argocd-server`, `application-controller`, `repo-server`, `dex`, `redis`) do not declare resource limits in this project — they use ArgoCD's upstream defaults.
+> ArgoCD system pods (`argocd-server`, `application-controller`, `repo-server`, `dex`, `redis`) do not declare resource limits in this project - they use ArgoCD's upstream defaults.
 
 ### Recommended host resources
 
 | Local cluster | Min RAM | Min CPU | Notes                                            |
 | ------------- | ------- | ------- | ------------------------------------------------ |
 | minikube      | 8 GiB   | 4 cores | Matches `make minikube-create` flags             |
-| kind          | 6 GiB   | 2 cores | No separate VM overhead — Docker containers only |
+| kind          | 6 GiB   | 2 cores | No separate VM overhead - Docker containers only |
