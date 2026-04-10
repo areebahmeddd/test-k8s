@@ -1,0 +1,209 @@
+# Network policies for the todo-app namespace.
+# Default-deny-all baseline; each workload gets an explicit allow policy.
+# Namespace selectors use kubernetes.io/metadata.name (auto-label, k8s 1.21+).
+
+---
+# deny all ingress and egress
+# overridden per workload below
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# allow-todo-api
+# ingress: traefik (8000), prometheus cross-namespace scrape (8000)
+# egress:  dns (53), pgbouncer (5432), alloy otlp grpc (4317)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-todo-api
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: todo-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # traefik
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 8000
+    # prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # dns
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # pgbouncer
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/poolerName: todo-db-pooler
+      ports:
+        - protocol: TCP
+          port: 5432
+    # alloy
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alloy
+      ports:
+        - protocol: TCP
+          port: 4317
+
+---
+# allow-pgbouncer
+# ingress: todo-api (5432)
+# egress:  dns (53), postgres primary (5432)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-pgbouncer
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/poolerName: todo-db-pooler
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # todo-api
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: todo-api
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress:
+    # dns
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # postgres
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: todo-db
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+# allow-postgres
+# ingress: pgbouncer (5432), peer replication (5432), cnpg operator (5432)
+# egress:  dns (53), peer replication (5432), k8s api (443)
+#
+# cnpg instance manager contacts the k8s api to read secrets and update
+# Cluster status. ha replication rules apply when patched to 3 instances in prod.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: todo-db
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # pgbouncer
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/poolerName: todo-db-pooler
+      ports:
+        - protocol: TCP
+          port: 5432
+    # peer replication
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: todo-db
+      ports:
+        - protocol: TCP
+          port: 5432
+    # cnpg operator
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress:
+    # dns
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # peer replication
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: todo-db
+      ports:
+        - protocol: TCP
+          port: 5432
+    # k8s api
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 443

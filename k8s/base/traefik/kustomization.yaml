@@ -5,6 +5,7 @@ namespace: traefik
 
 resources:
   - namespace.yaml
+  - network-policy.yaml
   - rbac.yaml
   - ingressclass.yaml
   - deployment.yaml

@@ -1,0 +1,125 @@
+# Network policies for the traefik namespace.
+# Default-deny-all baseline; each workload gets an explicit allow policy.
+# Namespace selectors use kubernetes.io/metadata.name (auto-label, k8s 1.21+).
+
+---
+# deny all ingress and egress
+# overridden per workload below
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# allow-traefik
+# ingress: external http (80), dashboard (9000)
+# egress:  dns (53), k8s api (443), todo-api (8000), argocd-server (80)
+#          grafana (3000), prometheus (9090), alloy ui (12345) -- prod ingress backends
+#
+# no from: selector on ingress port 80 -- hostport traffic arrives without
+# a source namespace label (kind / minikube tunnel).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # external http (no from: -- hostport traffic has no namespace label)
+    - ports:
+        - protocol: TCP
+          port: 80
+    # dashboard
+    - ports:
+        - protocol: TCP
+          port: 9000
+  egress:
+    # dns
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # k8s api -- watches ingress, service, secret, endpointslice
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 443
+    # todo-api
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: todo-app
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: todo-api
+      ports:
+        - protocol: TCP
+          port: 8000
+    # argocd-server
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd-server
+      ports:
+        - protocol: TCP
+          port: 80
+    # grafana
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+      ports:
+        - protocol: TCP
+          port: 3000
+    # prometheus
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+    # alloy
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: alloy
+      ports:
+        - protocol: TCP
+          port: 12345

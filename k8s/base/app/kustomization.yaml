@@ -5,6 +5,7 @@ namespace: todo-app
 
 resources:
   - namespace.yaml
+  - network-policy.yaml
   - todo-api-serviceaccount.yaml
   - todo-api-configmap.yaml
   - todo-api-deployment.yaml

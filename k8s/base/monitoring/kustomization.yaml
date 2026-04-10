@@ -5,6 +5,7 @@ namespace: monitoring
 
 resources:
   - namespace.yaml
+  - network-policy.yaml
   - alloy/serviceaccount.yaml
   - alloy/clusterrole.yaml
   - alloy/clusterrolebinding.yaml

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: prometheus
     app.kubernetes.io/instance: prometheus
-    app.kubernetes.io/version: "3.10.0"
+    app.kubernetes.io/version: "3.11.1"
     app.kubernetes.io/component: metrics
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: prometheus
         app.kubernetes.io/instance: prometheus
-        app.kubernetes.io/version: "3.10.0"
+        app.kubernetes.io/version: "3.11.1"
         app.kubernetes.io/component: metrics
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -31,7 +31,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: prometheus
-          image: prom/prometheus:v3.10.0
+          image: prom/prometheus:v3.11.1
           imagePullPolicy: IfNotPresent
           args:
             - --config.file=/etc/prometheus/prometheus.yml

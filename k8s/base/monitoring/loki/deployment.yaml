@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: loki
     app.kubernetes.io/instance: loki
-    app.kubernetes.io/version: "3.6.7"
+    app.kubernetes.io/version: "3.7.1"
     app.kubernetes.io/component: logging
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: loki
         app.kubernetes.io/instance: loki
-        app.kubernetes.io/version: "3.6.7"
+        app.kubernetes.io/version: "3.7.1"
         app.kubernetes.io/component: logging
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -31,7 +31,7 @@ spec:
         fsGroup: 10001
       containers:
         - name: loki
-          image: grafana/loki:3.6.7
+          image: grafana/loki:3.7.1
           imagePullPolicy: IfNotPresent
           args:
             - -config.file=/etc/loki/local-config.yaml

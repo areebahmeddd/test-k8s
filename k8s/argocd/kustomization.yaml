@@ -5,6 +5,7 @@ namespace: argocd
 
 resources:
   - namespace.yaml
+  - network-policy.yaml
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.3/manifests/install.yaml
   - sops-age-secret.yaml
   - argocd-server-ingress.yaml

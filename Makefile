@@ -57,7 +57,8 @@ downgrade:
 # ============================================
 
 minikube-create:
-	minikube start
+	minikube start --cni=calico --memory=4096 --cpus=4
+	kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=120s
 	kubectl label node minikube ingress-ready=true
 
 minikube-delete:
@@ -65,27 +66,27 @@ minikube-delete:
 
 docker-pull:
 	docker pull areebahmeddd/todo-api:1.0.0
-	docker pull traefik:v3.6.10
+	docker pull traefik:v3.6.13
 	docker pull ghcr.io/cloudnative-pg/postgresql:18
-	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
-	docker pull grafana/grafana:12.4.1
-	docker pull grafana/loki:3.6.7
-	docker pull grafana/tempo:2.10.2
-	docker pull grafana/alloy:v1.14.0
-	docker pull prom/prometheus:v3.10.0
-	docker pull prom/alertmanager:v0.31.1
+	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.29.0
+	docker pull grafana/grafana:12.4.2
+	docker pull grafana/loki:3.7.1
+	docker pull grafana/tempo:2.10.3
+	docker pull grafana/alloy:v1.15.0
+	docker pull prom/prometheus:v3.11.1
+	docker pull prom/alertmanager:v0.32.0
 
 minikube-load: docker-pull
 	minikube image load areebahmeddd/todo-api:1.0.0
-	minikube image load traefik:v3.6.10
-	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.28.1
+	minikube image load traefik:v3.6.13
+	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.29.0
 	minikube image load ghcr.io/cloudnative-pg/postgresql:18
-	minikube image load grafana/grafana:12.4.1
-	minikube image load grafana/loki:3.6.7
-	minikube image load grafana/tempo:2.10.2
-	minikube image load grafana/alloy:v1.14.0
-	minikube image load prom/prometheus:v3.10.0
-	minikube image load prom/alertmanager:v0.31.1
+	minikube image load grafana/grafana:12.4.2
+	minikube image load grafana/loki:3.7.1
+	minikube image load grafana/tempo:2.10.3
+	minikube image load grafana/alloy:v1.15.0
+	minikube image load prom/prometheus:v3.11.1
+	minikube image load prom/alertmanager:v0.32.0
 
 # ============================================
 # Kubernetes (Kustomize)

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/instance: alloy
-    app.kubernetes.io/version: "v1.14.0"
+    app.kubernetes.io/version: "v1.15.0"
     app.kubernetes.io/component: log-collector
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/instance: alloy
-        app.kubernetes.io/version: "v1.14.0"
+        app.kubernetes.io/version: "v1.15.0"
         app.kubernetes.io/component: log-collector
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -32,7 +32,7 @@ spec:
         fsGroup: 473
       containers:
         - name: alloy
-          image: grafana/alloy:v1.14.0
+          image: grafana/alloy:v1.15.0
           imagePullPolicy: IfNotPresent
           args:
             - run
