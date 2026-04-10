@@ -76,6 +76,38 @@ spec:
           port: 53
 
 ---
+# allow-argocd-repo-server
+# repo-server fetches git repos and Helm charts at sync time
+# egress: github / helm registry internet-bound (443)
+# ingress and k8s api covered by allow-argocd-internal
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-argocd-repo-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  policyTypes:
+    - Egress
+  egress:
+    # github / helm registry
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+
+---
 # allow-argocd-server
 # ingress: traefik (80) -- server.insecure=true, tls terminated at traefik
 # egress:  k8s api (443), github / helm registry internet-bound (443)

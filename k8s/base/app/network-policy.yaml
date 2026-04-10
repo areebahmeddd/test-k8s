@@ -199,7 +199,7 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # cnpg operator
+    # cnpg operator - 5432 for admin queries, 8000 for instance manager status probe
     - from:
         - namespaceSelector:
             matchLabels:
@@ -207,6 +207,8 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
+        - protocol: TCP
+          port: 8000
   egress:
     # dns
     - to:
