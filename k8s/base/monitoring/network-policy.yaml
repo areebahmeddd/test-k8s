@@ -166,7 +166,8 @@ spec:
 ---
 # allow-grafana
 # ingress: traefik (3000)
-# egress:  dns (53), prometheus (9090), loki (3100), tempo (3200)
+# egress:  dns (53), prometheus (9090), loki (3100), tempo (3200),
+#          grafana.com (443) for plugin catalog, signature keys, update checks
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -201,6 +202,17 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # grafana
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
     # prometheus
     - to:
         - podSelector:

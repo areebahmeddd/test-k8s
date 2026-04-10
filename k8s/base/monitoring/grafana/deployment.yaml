@@ -40,6 +40,10 @@ spec:
           env:
             - name: GF_LOG_LEVEL
               value: warn
+            - name: GF_PLUGINS_PREINSTALL_DISABLED
+              value: "true"
+            - name: GF_ANALYTICS_REPORTING_ENABLED
+              value: "false"
             - name: GF_SECURITY_ADMIN_USER
               valueFrom:
                 secretKeyRef:

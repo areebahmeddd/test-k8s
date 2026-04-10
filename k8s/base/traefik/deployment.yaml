@@ -57,6 +57,9 @@ spec:
             - --ping
             - --ping.entrypoint=traefik
             - --log.level=info
+            # Global settings
+            - --global.checknewversion=false
+            - --global.sendanonymoususage=false
           ports:
             - name: web
               containerPort: 80
