@@ -21,7 +21,7 @@ spec:
 ---
 # allow-todo-api
 # ingress: traefik (8000), prometheus cross-namespace scrape (8000)
-# egress:  dns (53), pgbouncer (5432), alloy otlp grpc (4317)
+# egress:  dns (53), pgbouncer (5432), postgres direct (5432), alloy otlp grpc (4317)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -67,11 +67,19 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # pgbouncer
+    # pgbouncer (via pooler service)
     - to:
         - podSelector:
             matchLabels:
               cnpg.io/poolerName: todo-db-pooler
+      ports:
+        - protocol: TCP
+          port: 5432
+    # postgres direct (DATABASE_URL points to todo-db-rw)
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: todo-db
       ports:
         - protocol: TCP
           port: 5432
@@ -90,7 +98,7 @@ spec:
 ---
 # allow-pgbouncer
 # ingress: todo-api (5432)
-# egress:  dns (53), postgres primary (5432)
+# egress:  dns (53), postgres primary (5432), k8s api (443/8443)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -133,10 +141,21 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
+    # k8s api — cnpg pgbouncer instance manager watches pooler/secret resources
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.0/12
+        - ipBlock:
+            cidr: 192.168.49.2/32
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8443
 
 ---
 # allow-postgres
-# ingress: pgbouncer (5432), peer replication (5432), cnpg operator (5432)
+# ingress: pgbouncer (5432), todo-api direct (5432), peer replication (5432), cnpg operator (5432)
 # egress:  dns (53), peer replication (5432), k8s api (443)
 #
 # cnpg instance manager contacts the k8s api to read secrets and update
@@ -161,6 +180,14 @@ spec:
         - podSelector:
             matchLabels:
               cnpg.io/poolerName: todo-db-pooler
+      ports:
+        - protocol: TCP
+          port: 5432
+    # todo-api direct (DATABASE_URL points to todo-db-rw cluster service)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: todo-api
       ports:
         - protocol: TCP
           port: 5432
@@ -199,11 +226,15 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # k8s api
+    # k8s api — CNPG instance manager reads secrets/updates status
+    # allow both service ClusterIP cidr and node IP (post-DNAT for minikube)
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
+        - ipBlock:
+            cidr: 10.96.0.0/12
+        - ipBlock:
+            cidr: 192.168.49.2/32
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 8443

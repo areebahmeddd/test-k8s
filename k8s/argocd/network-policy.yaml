@@ -52,6 +52,18 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: argocd
+    # k8s api — required by redis secret-init, app-controller, repo-server
+    # allow both the service ClusterIP cidr and node IP (post-DNAT)
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.0/12
+        - ipBlock:
+            cidr: 192.168.49.2/32
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8443
     # dns
     - to:
         - namespaceSelector:
@@ -92,14 +104,17 @@ spec:
         - protocol: TCP
           port: 80
   egress:
-    # k8s api
+    # k8s api — allow both service ClusterIP cidr and node IP (post-DNAT)
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
+        - ipBlock:
+            cidr: 10.96.0.0/12
+        - ipBlock:
+            cidr: 192.168.49.2/32
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 8443
     # github / helm registry
     - to:
         - ipBlock:

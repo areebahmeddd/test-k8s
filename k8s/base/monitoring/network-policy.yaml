@@ -85,14 +85,18 @@ spec:
       ports:
         - protocol: TCP
           port: 4318
-    # k8s api
+    # k8s api — pod discovery for log tailing
+    # allow both service ClusterIP cidr and node IP (post-DNAT for minikube)
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
+        - ipBlock:
+            cidr: 10.96.0.0/12
+        - ipBlock:
+            cidr: 192.168.49.2/32
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 8443
 
 ---
 # allow-prometheus
