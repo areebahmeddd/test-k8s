@@ -57,10 +57,12 @@ egress:
 | traefik             | grafana                       | 3000  | TCP      | `allow-grafana` ingress (prod only)                                                                 |
 | traefik             | prometheus                    | 9090  | TCP      | `allow-prometheus` ingress (prod only)                                                              |
 | traefik             | alloy                         | 12345 | TCP      | `allow-alloy` ingress (prod only)                                                                   |
-| todo-api            | pgbouncer                     | 5432  | TCP      | `allow-pgbouncer` ingress                                                                           |
-| pgbouncer           | postgres (primary)            | 5432  | TCP      | `allow-postgres` ingress                                                                            |
-| postgres            | postgres (replicas)           | 5432  | TCP      | `allow-postgres` ingress (peer replication)                                                         |
-| postgres            | Kubernetes API (`default` ns) | 443   | TCP      | `allow-postgres` egress - CNPG instance manager reads Secrets/ConfigMaps and updates Cluster status |
+| todo-api            | pgbouncer                     | 5432     | TCP      | `allow-pgbouncer` ingress                                                                                 |
+| todo-api            | postgres (todo-db-rw)         | 5432     | TCP      | `allow-todo-api` egress, `allow-postgres` ingress (DATABASE_URL points to cluster service directly)       |
+| pgbouncer           | postgres (primary)            | 5432     | TCP      | `allow-postgres` ingress                                                                                   |
+| pgbouncer           | Kubernetes API                | 443/8443 | TCP      | `allow-pgbouncer` egress (ipBlock) - CNPG PgBouncer instance manager watches Pooler and Secret resources  |
+| postgres            | postgres (replicas)           | 5432     | TCP      | `allow-postgres` ingress (peer replication)                                                                |
+| postgres            | Kubernetes API                | 443/8443 | TCP      | `allow-postgres` egress (ipBlock) - CNPG instance manager reads Secrets and updates Cluster status        |
 | todo-api            | alloy                         | 4317  | TCP      | `allow-alloy` ingress (OTLP gRPC traces/metrics)                                                    |
 | prometheus          | todo-api                      | 8000  | TCP      | `allow-todo-api` ingress (cross-namespace scrape)                                                   |
 | prometheus          | alertmanager                  | 9093  | TCP      | `allow-alertmanager` ingress                                                                        |
@@ -70,8 +72,9 @@ egress:
 | grafana             | loki                          | 3100  | TCP      | `allow-loki` ingress                                                                                |
 | grafana             | tempo                         | 3200  | TCP      | `allow-tempo` ingress                                                                               |
 | alertmanager        | internet (Slack)              | 443   | TCP      | `allow-alertmanager` egress (`ipBlock` excl. RFC1918)                                               |
-| argocd-server       | internet (GitHub / Helm)      | 443   | TCP      | `allow-argocd-server` egress (`ipBlock` excl. RFC1918)                                              |
-| All pods            | CoreDNS (`kube-system`)       | 53    | UDP+TCP  | included in every per-workload egress                                                               |
+| argocd-server       | internet (GitHub / Helm)      | 443      | TCP      | `allow-argocd-server` egress (`ipBlock` excl. RFC1918)                                              |
+| argocd (all pods)   | Kubernetes API                | 443/8443 | TCP      | `allow-argocd-internal` egress (ipBlock) - redis secret-init, app-controller, repo-server          |
+| All pods            | CoreDNS (`kube-system`)       | 53       | UDP+TCP  | included in every per-workload egress                                                               |
 
 ## Policy Inventory
 
@@ -80,9 +83,9 @@ egress:
 | Policy             | Selects                              | Ingress from                                            | Egress to                                  |
 | ------------------ | ------------------------------------ | ------------------------------------------------------- | ------------------------------------------ |
 | `default-deny-all` | all pods                             | -                                                       | -                                          |
-| `allow-todo-api`   | `app: todo-api`                      | traefik `:8000`, monitoring (prometheus scrape) `:8000` | DNS, pgbouncer `:5432`, alloy `:4317`      |
-| `allow-pgbouncer`  | `cnpg.io/poolerName: todo-db-pooler` | todo-api `:5432`                                        | DNS, postgres `:5432`                      |
-| `allow-postgres`   | `cnpg.io/cluster: todo-db`           | pgbouncer `:5432`, peer postgres `:5432`                | DNS, peer postgres `:5432`, k8s-api `:443` |
+| `allow-todo-api`   | `app.kubernetes.io/name: todo-api`   | traefik `:8000`, monitoring/prometheus `:8000`          | DNS, pgbouncer `:5432`, postgres direct `:5432`, alloy `:4317` |
+| `allow-pgbouncer`  | `cnpg.io/poolerName: todo-db-pooler` | todo-api `:5432`                                        | DNS, postgres `:5432`, k8s-api `:443/:8443`                    |
+| `allow-postgres`   | `cnpg.io/cluster: todo-db`           | pgbouncer `:5432`, todo-api `:5432`, cnpg-system `:5432`, peer postgres `:5432` | DNS, peer postgres `:5432`, k8s-api `:443/:8443` |
 
 ### `monitoring` namespace (`k8s/base/monitoring/network-policy.yaml`)
 
@@ -108,8 +111,8 @@ egress:
 | Policy                  | Selects                                 | Ingress from            | Egress to                                          |
 | ----------------------- | --------------------------------------- | ----------------------- | -------------------------------------------------- |
 | `default-deny-all`      | all pods                                | -                       | -                                                  |
-| `allow-argocd-internal` | all pods                                | within argocd namespace | DNS, within argocd, k8s-api `:443`                 |
-| `allow-argocd-server`   | `app.kubernetes.io/name: argocd-server` | traefik `:80`           | DNS, k8s-api `:443`, internet `:443` excl. RFC1918 |
+| `allow-argocd-internal` | all pods                                | within argocd namespace | within argocd, k8s-api `:443/:8443`, DNS  |
+| `allow-argocd-server`   | `app.kubernetes.io/name: argocd-server` | traefik `:80`           | k8s-api `:443/:8443`, internet `:443` excl. RFC1918 |
 
 > **Note:** ArgoCD's upstream `install.yaml` ships its own per-component `NetworkPolicy` objects. Our policies are additive - Kubernetes applies the union of all matching policies (most permissive wins per direction).
 
@@ -121,8 +124,21 @@ ArgoCD has many internal components (server, repo-server, application-controller
 **`allow-traefik` ingress has no `from:` on port 80**  
 Traffic arrives from the node's network stack via `hostPort`, not from identifiable pod sources. Omitting `from:` is correct for host-network ingress paths in minikube/KinD.
 
-**`allow-postgres` egress targets `default:443`**  
-The CNPG instance manager running inside each postgres pod needs to read Kubernetes Secrets and ConfigMaps and update the `Cluster` CRD status. The Kubernetes API server is reachable via the `kubernetes` ClusterIP service in the `default` namespace - not from `cnpg-system`.
+**K8s API egress uses `ipBlock`, not `namespaceSelector`**  
+All components that need the Kubernetes API server (CNPG postgres/pgbouncer instance managers, Alloy pod discovery, Traefik Ingress controller, ArgoCD components) use `ipBlock` ranges rather than a `namespaceSelector` targeting the `default` namespace.
+
+The API server is a host-network process - `namespaceSelector` cannot match it. With Calico in iptables mode, packets are evaluated before kube-proxy DNAT, so the rule must cover both the `kubernetes` service ClusterIP CIDR and the node IP that kube-proxy rewrites connections to:
+
+```yaml
+- to:
+    - ipBlock:
+        cidr: 10.96.0.0/12        # kubernetes svc CIDR (pre-DNAT ClusterIP)
+    - ipBlock:
+        cidr: 192.168.49.2/32     # minikube node IP (post-DNAT target)
+  ports:
+    - { protocol: TCP, port: 443 }   # kubernetes svc port
+    - { protocol: TCP, port: 8443 }  # api server advertise port
+```
 
 **`allow-alertmanager` and `allow-argocd-server` use `ipBlock` for internet egress**  
 These are the only components that legitimately need to reach external endpoints (Slack webhooks, GitHub API, Helm repositories). `ipBlock: 0.0.0.0/0` with RFC1918 exclusions (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) restricts this to true internet addresses only.
@@ -147,12 +163,12 @@ uv run conftest test k8s/base/monitoring/ --policy policy/
 Verify no unexpected traffic is allowed by checking pod connectivity:
 
 ```sh
-# Should be rejected (no policy allows this path)
-kubectl exec -n monitoring deploy/prometheus -- \
-  curl -s --max-time 3 http://todo-api.todo-app.svc.cluster.local:8000/healthz
-# Expected: connection refused or timeout  (ingress allowed, but this is a sanity direction test)
+# From a pod with no broad egress, this should be rejected (grafana has no egress to todo-app)
+kubectl run -n monitoring --image=curlimages/curl --restart=Never --rm -it test -- \
+  curl -s --max-time 3 http://todo-api.todo-app.svc.cluster.local:8000/health
+# Expected: connection timeout (grafana/etc have no egress to todo-app)
 
-# Should succeed
-kubectl exec -n todo-app deploy/todo-api -- \
-  curl -s --max-time 3 http://todo-db-pooler.todo-app.svc.cluster.local:5432 || echo "TCP conn"
+# This should succeed (prometheus is allowed to scrape todo-api)
+kubectl exec -n monitoring deploy/prometheus -- \
+  curl -s --max-time 3 http://todo-api.todo-app.svc.cluster.local:8000/metrics | head -3
 ```

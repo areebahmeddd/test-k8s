@@ -85,8 +85,7 @@ spec:
       ports:
         - protocol: TCP
           port: 4318
-    # k8s api — pod discovery for log tailing
-    # allow both service ClusterIP cidr and node IP (post-DNAT for minikube)
+    # k8s api - pod discovery via discovery.kubernetes component
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12
@@ -326,7 +325,7 @@ spec:
 # ingress: prometheus (9093)
 # egress:  dns (53), slack webhook internet-bound (443)
 #
-# internet egress scoped to alertmanager only â€” no other pod in this namespace
+# internet egress scoped to alertmanager only - no other pod in this namespace
 # needs outbound access to the public internet.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

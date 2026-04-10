@@ -141,7 +141,7 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # k8s api — cnpg pgbouncer instance manager watches pooler/secret resources
+    # k8s api - cnpg pgbouncer instance manager watches pooler/secret resources
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12
@@ -226,8 +226,7 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
-    # k8s api — CNPG instance manager reads secrets/updates status
-    # allow both service ClusterIP cidr and node IP (post-DNAT for minikube)
+    # k8s api - CNPG instance manager reads secrets/updates Cluster status
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12

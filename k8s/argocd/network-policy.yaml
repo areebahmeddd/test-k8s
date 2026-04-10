@@ -52,8 +52,8 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: argocd
-    # k8s api — required by redis secret-init, app-controller, repo-server
-    # allow both the service ClusterIP cidr and node IP (post-DNAT)
+    # k8s api - required by redis secret-init, app-controller, repo-server
+    # ipBlock covers service CIDR (pre-DNAT) + minikube node IP (post-DNAT via kube-proxy)
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12
@@ -104,7 +104,7 @@ spec:
         - protocol: TCP
           port: 80
   egress:
-    # k8s api — allow both service ClusterIP cidr and node IP (post-DNAT)
+    # k8s api - service CIDR + minikube node IP (see allow-argocd-internal)
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12

@@ -61,7 +61,6 @@ spec:
         - protocol: TCP
           port: 53
     # k8s api -- watches ingress, service, secret, endpointslice
-    # allow both service ClusterIP cidr and node IP (post-DNAT for minikube)
     - to:
         - ipBlock:
             cidr: 10.96.0.0/12
