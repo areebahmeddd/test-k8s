@@ -2,6 +2,14 @@
 
 A REST API for managing todos with user authentication. Built with FastAPI, SQLAlchemy (async), and JWT-based auth using short-lived access tokens and rotating refresh tokens.
 
+## Roadmap
+
+- [ ] Migrate policy engine from OPA to Kyverno
+- [ ] Service mesh with Linkerd (mTLS, traffic policies, observability)
+- [ ] KEDA for event-driven autoscaling of the todo-api deployment
+- [ ] Authentik as the identity provider (SSO, OIDC, Grafana/ArgoCD login)
+- [ ] Litmus Chaos for chaos engineering experiments
+
 ## Stack
 
 | Layer      | Technology                              |

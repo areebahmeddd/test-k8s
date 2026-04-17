@@ -3,6 +3,7 @@
 .PHONY: up down quality test coverage migrate upgrade downgrade \
         minikube-create minikube-delete minikube-load minikube-tunnel docker-pull \
         k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
+        pulumi-init pulumi-up pulumi-destroy \
         check-sops sops-encrypt sops-decrypt \
         db-reset cnpg-status \
         validate validate-k8s validate-schema validate-sops validate-policies
@@ -125,6 +126,26 @@ k8s-pf:
 	kubectl port-forward -n monitoring svc/grafana 3000:3000 &
 	kubectl port-forward -n monitoring svc/prometheus 9090:9090 &
 	kubectl port-forward -n monitoring svc/alloy 12345:12345 &
+
+# ============================================
+# Pulumi
+# ============================================
+# pulumi-init:    one-time setup; creates infra/venv and installs requirements.txt.
+# pulumi-up:      idempotent bootstrap; installs CNPG (Helm), ArgoCD (kustomize),
+#                 namespaces, and K8s Secrets. Set secrets first:
+#                   cd infra && pulumi config set --secret todo-k8s-infra:<key> <val>
+# pulumi-destroy: tear down all Pulumi-managed resources (not the cluster itself).
+
+pulumi-init:
+	python3 -m venv infra/venv
+	infra/venv/bin/pip install --quiet --upgrade pip
+	infra/venv/bin/pip install --quiet -r infra/requirements.txt
+
+pulumi-up:
+	cd infra && pulumi up --stack $(OVERLAY) --yes
+
+pulumi-destroy:
+	cd infra && pulumi destroy --stack $(OVERLAY) --yes
 
 # ============================================
 # SOPS Secret Management

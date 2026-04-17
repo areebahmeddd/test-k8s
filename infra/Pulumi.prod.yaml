@@ -1,0 +1,5 @@
+config:
+  todo-k8s-infra:overlay: prod
+  # Secret values are not stored here. Set them with:
+  #   pulumi config set --secret todo-k8s-infra:<key> <value>
+  # See infra/README.md for the full list of required keys.

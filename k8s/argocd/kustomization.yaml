@@ -9,7 +9,9 @@ resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.3.3/manifests/install.yaml
   - sops-age-secret.yaml
   - argocd-server-ingress.yaml
-  - applications/cloudnativepg.yaml
+  # cloudnativepg.yaml removed — CNPG operator is now a direct Pulumi Helm
+  # Release (infra/src/cnpg.py) to guarantee CRDs exist before ArgoCD syncs
+  # the cluster overlay. The file is kept in applications/ as a reference.
   - applications/todo-app-dev.yaml
   - applications/todo-app-prod.yaml
 
