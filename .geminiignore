@@ -1,0 +1,36 @@
+# Python runtime artifacts
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Test and coverage output
+
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Alembic generated migrations (keep for history, skip binary content)
+
+alembic/versions/__pycache__/
+
+# Kubernetes secrets and sensitive overlays
+
+k8s/argocd/sops-age-secret.yaml
+
+# Infra state
+
+infra/.pulumi/
+
+# Editor and OS noise
+
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

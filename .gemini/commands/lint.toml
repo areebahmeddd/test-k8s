@@ -1,0 +1,12 @@
+description = "Lint and format all Python source files."
+
+prompt = """
+Run Ruff lint and format checks:
+
+```
+!{uv run ruff check app/ --fix 2>&1}
+!{uv run ruff format app/ 2>&1}
+```
+
+Report any violations that could not be auto-fixed and explain what needs to change.
+"""

@@ -1,0 +1,11 @@
+description = "Apply pending Alembic database migrations."
+
+prompt = """
+Run pending database migrations:
+
+```
+!{uv run alembic upgrade head 2>&1}
+```
+
+Report the migration steps applied. If the command fails, diagnose the error and suggest a fix.
+"""

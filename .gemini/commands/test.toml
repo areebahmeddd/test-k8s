@@ -1,0 +1,14 @@
+description = "Run the full test suite with coverage report."
+
+prompt = """
+Run the test suite and report results:
+
+```
+!{uv run pytest -v --cov=app --cov-report=term-missing 2>&1}
+```
+
+Summarize:
+1. Total passed / failed / skipped
+2. Any failing tests — show the error and suggest a fix
+3. Coverage percentage and any uncovered lines worth addressing
+"""
