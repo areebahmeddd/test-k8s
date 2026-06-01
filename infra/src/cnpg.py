@@ -27,10 +27,9 @@ def deploy_cnpg(provider: k8s.Provider) -> Release:
                 "replicaCount": 1,
             },
             # atomic purges the release on failure so the cluster is not left
-            # in a partial state.
+            # in a partial state; 300 s covers CRD registration and pod startup.
             atomic=True,
-            timeout=120,
+            timeout=300,
         ),
         opts=pulumi.ResourceOptions(provider=provider),
     )
-

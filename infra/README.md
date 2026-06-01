@@ -18,7 +18,7 @@ overlay, which contains `Cluster` and `Pooler` CRs.
 ## Prerequisites
 
 - Python >= 3.11
-- [Pulumi CLI](https://pulumi.com/docs/install/) >= 3.231.0
+- [Pulumi CLI](https://pulumi.com/docs/install/) >= 3.240.0
 - `kubectl` configured to target the cluster
 - `kustomize` on PATH (invoked by `src/argocd.py` at plan time)
 

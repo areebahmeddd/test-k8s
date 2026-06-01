@@ -4,6 +4,7 @@ A REST API for managing todos with user authentication. Built with FastAPI, SQLA
 
 ## Roadmap
 
+- [ ] Migrate observability stack to LGTM (Loki, Grafana, Tempo, Mimir)
 - [ ] Migrate policy engine from OPA to Kyverno
 - [ ] Service mesh with Linkerd (mTLS, traffic policies, observability)
 - [ ] KEDA for event-driven autoscaling of the todo-api deployment

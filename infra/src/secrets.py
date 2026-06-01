@@ -17,13 +17,15 @@ def deploy_secrets(
 ) -> list[k8s.core.v1.Secret]:
     """Create application namespaces and K8s Secrets from Pulumi config.
 
-    Namespaces are pre-created so secrets land immediately after pulumi up,
-    before ArgoCD's async GitOps sync. Pulumi and ArgoCD use server-side apply
-    with separate field managers, so dual ownership is safe and idempotent.
+    Namespaces are pre-created so secrets land before ArgoCD's first sync.
+    Both Pulumi and ArgoCD use server-side apply with separate field managers,
+    so dual ownership is safe and idempotent.
     """
     cfg = pulumi.Config()
 
-    ns_opts = pulumi.ResourceOptions(provider=provider)
+    # Namespaces are created after ArgoCD is deployed to prevent a race where
+    # ArgoCD and Pulumi both attempt to create the same namespace simultaneously.
+    ns_opts = pulumi.ResourceOptions(provider=provider, depends_on=[argocd_group])
 
     todo_app_ns = k8s.core.v1.Namespace(
         "todo-app-ns",
