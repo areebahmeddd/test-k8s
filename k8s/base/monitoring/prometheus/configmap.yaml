@@ -24,13 +24,24 @@ data:
       - /etc/prometheus/alert-rules.yml
 
     scrape_configs:
+      # One target per todo-api pod (scraping the Service would hit a random replica).
       - job_name: todo-api
-        # Cross-namespace: todo-api lives in the todo-app namespace
-        static_configs:
-          - targets:
-              - todo-api.todo-app.svc.cluster.local:8000
-        metrics_path: /metrics
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [todo-app]
+            selectors:
+              - role: pod
+                label: app.kubernetes.io/name=todo-api
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: http
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
 
+  # Metric names come from prometheus-fastapi-instrumentator: http_requests_total
+  # carries status (grouped as 2xx/4xx/5xx); http_request_duration_seconds does not.
   alert-rules.yml: |
     groups:
       - name: todo-api
@@ -41,29 +52,29 @@ data:
             labels:
               severity: critical
             annotations:
-              summary: "Todo API is down"
-              description: "Prometheus has been unable to scrape the todo-api for more than 1 minute."
+              summary: "Todo API pod {{ $labels.pod }} is down"
+              description: "Prometheus has been unable to scrape {{ $labels.pod }} for more than 1 minute."
 
           - alert: HighErrorRate
             expr: |
-              sum(rate(http_request_duration_seconds_count{status=~"5.*"}[5m]))
+              sum(rate(http_requests_total{job="todo-api", status="5xx"}[5m]))
               /
-              sum(rate(http_request_duration_seconds_count[5m])) > 0.05
+              sum(rate(http_requests_total{job="todo-api"}[5m])) > 0.05
             for: 2m
             labels:
               severity: critical
             annotations:
               summary: "High HTTP 5xx error rate"
-              description: "More than 5% of all requests are returning 5xx errors over the last 5 minutes."
+              description: "More than 5% of requests returned 5xx over the last 5 minutes."
 
           - alert: SlowP99Latency
             expr: |
               histogram_quantile(0.99,
-                sum(rate(http_request_duration_seconds_bucket[5m])) by (handler, le)
-              ) > 1.0
+                sum by (handler, le) (rate(http_request_duration_seconds_bucket{job="todo-api"}[5m]))
+              ) > 1
             for: 3m
             labels:
               severity: warning
             annotations:
-              summary: "Slow p99 response latency on {{ $labels.handler }}"
-              description: "p99 response time on {{ $labels.handler }} has exceeded 1s for more than 3 minutes (current: {{ $value | humanizeDuration }})."
+              summary: "Slow p99 latency on {{ $labels.handler }}"
+              description: "p99 latency on {{ $labels.handler }} has exceeded 1s for 3 minutes (current: {{ $value | humanizeDuration }})."

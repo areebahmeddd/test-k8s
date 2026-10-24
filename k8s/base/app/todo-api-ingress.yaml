@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   ingressClassName: traefik
-  # TODO: add a tls block with cert-manager ClusterIssuer annotation.
+  # The host is set per overlay.
   rules:
     - http:
         paths:

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: tempo
     app.kubernetes.io/instance: tempo
-    app.kubernetes.io/version: "2.10.3"
+    app.kubernetes.io/version: "3.1.1"
     app.kubernetes.io/component: tracing
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: tempo
         app.kubernetes.io/instance: tempo
-        app.kubernetes.io/version: "2.10.3"
+        app.kubernetes.io/version: "3.1.1"
         app.kubernetes.io/component: tracing
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -29,9 +29,11 @@ spec:
         runAsUser: 10001
         runAsGroup: 10001
         fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: tempo
-          image: grafana/tempo:2.10.3
+          image: grafana/tempo:3.1.1
           imagePullPolicy: IfNotPresent
           args:
             - -config.file=/etc/tempo.yaml
@@ -79,6 +81,5 @@ spec:
           configMap:
             name: tempo-config
         - name: data
-          # TODO: replace with a PersistentVolumeClaim — trace blocks and
-          # the WAL are lost on every pod restart with emptyDir.
+          # Ephemeral: traces are lost on restart (use a PVC or object storage beyond a lab).
           emptyDir: {}

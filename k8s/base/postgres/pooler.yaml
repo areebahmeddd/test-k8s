@@ -13,7 +13,7 @@ spec:
   cluster:
     name: todo-db
   type: rw
-  # Patched per overlay: dev → 1, prod → 2
+  # prod overlay: 2 instances
   instances: 1
   pgbouncer:
     # session mode: safe for SQLAlchemy async (transaction mode breaks prepared statements)

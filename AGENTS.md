@@ -1,42 +1,67 @@
-# Project: FastAPI Todo API on Kubernetes
+# AGENTS.md
 
-**Stack:** Python 3.11 · FastAPI · SQLAlchemy (async) · Alembic · uv · ruff · pytest  
-**K8s layout:** `k8s/base/` (base manifests) + `k8s/overlays/dev|prod/` (Kustomize overlays)  
-**Observability:** OpenTelemetry → Tempo (traces) · Loki (logs) · Prometheus (metrics) · Grafana (dashboards)
+Instructions for AI coding agents working in this repository. Documentation for people lives in
+[README.md](README.md) and [docs/](docs/).
 
-## Package Manager and Toolchain
+## Project
 
-- **Always** use `uv run <cmd>` to execute — never bare `python` or `pip`
-- Install packages: `uv add <pkg>`, sync: `uv sync --frozen`
-- Lint: `uv run ruff check app/ --fix` — Format: `uv run ruff format app/`
-- Test: `uv run pytest -v --cov=app --cov-report=term-missing`
-- Migrations: `uv run alembic revision --autogenerate -m "..."` then `uv run alembic upgrade head`
+A FastAPI todo API (JWT authentication, async SQLAlchemy, Alembic) deployed to Kubernetes as a hands-on tour of
+CNCF tooling: Kustomize, ArgoCD, CloudNativePG, Traefik, Calico NetworkPolicies, SOPS with age, OPA with
+conftest, Tilt, Pulumi, and an observability stack where OpenTelemetry and Alloy feed Tempo, Loki and
+Prometheus, all viewed in Grafana.
 
-## Non-Negotiable Rules
+| Path            | Contents                                                                                |
+| --------------- | --------------------------------------------------------------------------------------- |
+| `app/`          | The FastAPI application: `api/v1/`, `core/`, `models/`, `schemas/` and the `static/` UI |
+| `alembic/`      | Migrations; the app never creates tables at startup                                     |
+| `tests/`        | `unit/` (no I/O) and `integration/` (httpx `AsyncClient` against SQLite)                |
+| `k8s/base/`     | Manifests shared by every environment: `app`, `postgres`, `traefik`, `monitoring`       |
+| `k8s/overlays/` | `dev` and `prod` patches, plus SOPS-encrypted `secrets/`                                |
+| `k8s/argocd/`   | ArgoCD bootstrap per environment (`base/`, `dev/`, `prod/`)                             |
+| `infra/`        | Pulumi program: an alternative bootstrap that takes secrets from Pulumi config          |
+| `policy/`       | OPA policies run by conftest against the rendered overlays, with their unit tests       |
 
-- Type hints on every function signature — use `X | Y` unions, not `Optional[X]`
-- No `print()` — use Python `logging` or `structlog`
-- All new endpoints require a Pydantic schema in `app/schemas/`
-- Secrets never in code, logs, or ConfigMaps — K8s Secrets + env vars only
-- Ruff must pass (zero warnings) before any commit
-- Every `async` function must properly `await` all coroutines
+## Commands
 
-## Project Structure
+Run everything through `uv`, never bare `python` or `pip`. `make help` lists every target.
 
-- `app/models/` — SQLAlchemy ORM models only
-- `app/schemas/` — Pydantic request/response schemas only
-- `app/api/v1/` — Route handlers (thin — delegate to repository/service layer)
-- `app/core/` — Config, database engine, security utilities
-- `tests/unit/` — Pure logic tests (no I/O)
-- `tests/integration/` — Full API tests via httpx AsyncClient
+```bash
+uv sync                                                        # install (CI uses --locked)
+uv run ruff check . --fix && uv run ruff format .
+uv run pytest -v --cov=app                                     # no services needed
+uv run alembic revision --autogenerate -m "describe the change"  # then review the generated file
+uv run alembic upgrade head
+make validate                                                  # manifests, schemas, SOPS, policies
+```
 
-## Available Customizations
+Before calling work done, run the linter and the tests, and run `make validate` for any change under `k8s/` or
+`policy/`.
 
-**Agents** (`.claude/skills/`) — `architect` · `reviewer`
+## Rules
 
-**Rules** (`.claude/rules/`) — auto-applied per file type: `python` · `kubernetes` · `docker` · `github-actions` · `testing` · `api-design`
+- Python 3.14, pinned by `requires-python`. Type-hint every signature, using `X | None`, built-in generics and
+  `collections.abc`.
+- Request and response bodies are Pydantic models in `app/schemas/`; ORM models live only in `app/models/`.
+- Keep handlers small. Put shared lookups in a private helper (see `_get_owned_todo`), and add a service module
+  only when the logic outgrows that.
+- A resource owned by another user returns **404**, never 403, so ids are not disclosed.
+- Every model change ships with an Alembic migration; CI runs `alembic check`.
+- Log with `logging.getLogger(__name__)`. Logs are JSON and carry trace ids when tracing is on. Never use
+  `print()`, and never log secrets, tokens or passwords.
+- Configuration comes from environment variables through `app/core/config.py`. Secrets belong in Kubernetes
+  Secrets, SOPS-encrypted in Git, and never in code, ConfigMaps or logs.
+- Kubernetes changes keep the base environment-agnostic, put differences in the overlays and add NetworkPolicy
+  rules for every new traffic path. The full checklist is in
+  [.github/instructions/kubernetes.instructions.md](.github/instructions/kubernetes.instructions.md).
+- A release bumps the version in `pyproject.toml`, `app/core/config.py`, the `Makefile` image tag and the image
+  and version label in `k8s/base/app/todo-api-deployment.yaml` together, then publishes the image with
+  `make image-push`.
+- Never commit `age.key`, `.env` or a decrypted secret. Edit secrets with `sops <file>`.
 
-**Skills** (`.claude/skills/`) — invoke by name:
+## Customizations
 
-- `brand-guidelines` · `clean-code` · `code-review` · `conventional-commit` · `deep-thinking`
-- `frontend-design` · `quasi-coder` · `refactor` · `solid-principles` · `web-performance`
+Copilot reads these from `.github/`, alongside this file:
+
+- `instructions/`: rules scoped by `applyTo` for Python, API routes, tests, Kubernetes, Docker and GitHub Actions
+- `agents/`: `architect` for design and trade-offs (read-only) and `reviewer` for adversarial pre-merge review
+- `skills/`: `clean-code` and `conventional-commit`

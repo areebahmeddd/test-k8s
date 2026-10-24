@@ -43,9 +43,12 @@ The component/module affected. Use consistently:
 | Scope        | Covers                                         |
 | ------------ | ---------------------------------------------- |
 | `api`        | Route handlers, API endpoints                  |
+| `ui`         | Static web UI in app/static                    |
 | `auth`       | Authentication, JWT, tokens                    |
 | `db`         | Database models, migrations, queries           |
 | `k8s`        | Kubernetes manifests, Kustomize overlays       |
+| `infra`      | Pulumi bootstrap program                       |
+| `policy`     | OPA/conftest policies                          |
 | `monitoring` | Prometheus, Grafana, Loki, Tempo, OTel configs |
 | `deps`       | Dependency additions or upgrades               |
 | `config`     | Application configuration                      |
@@ -126,7 +129,7 @@ to the new overlays.
 
 ## Procedure
 
-1. `git diff --staged` — review exactly what's staged
+1. `git diff --staged`: review exactly what's staged
 2. Identify the **primary type** of change (one commit = one type)
 3. Identify the **scope** (which subsystem)
 4. Write the subject: imperative, ≤72 chars total, no period
@@ -142,4 +145,4 @@ Each commit should:
 - Be independently reversible with `git revert`
 - Represent ONE logical change
 
-If your commit message needs "and" — split it into two commits.
+If your commit message needs "and", split it into two commits.

@@ -6,16 +6,16 @@ metadata:
   labels:
     app.kubernetes.io/name: todo-db
     app.kubernetes.io/instance: todo-db
-    app.kubernetes.io/version: "18"
+    app.kubernetes.io/version: "18.6"
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
 spec:
-  # Patched per overlay: dev → 1, prod → 3
+  # prod overlay: 3 instances
   instances: 1
-  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie
   imagePullPolicy: IfNotPresent
-  # todo-db-secret must contain: stringData.password: <value>
+  # todo-db-secret holds the owner username and password (also used by todo-api).
   bootstrap:
     initdb:
       database: todos
@@ -24,7 +24,7 @@ spec:
         name: todo-db-secret
       dataChecksums: true
       encoding: UTF8
-  # Patched per overlay: dev → 5Gi, prod → 50Gi
+  # prod overlay: 50Gi data / 5Gi WAL
   storage:
     size: 5Gi
   walStorage:
@@ -39,6 +39,6 @@ spec:
   replicationSlots:
     highAvailability:
       enabled: true
-  # Patched per overlay: dev → false, prod → true
+  # prod overlay: true
   enablePDB: false
   logLevel: info

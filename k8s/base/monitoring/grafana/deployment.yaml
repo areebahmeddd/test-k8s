@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: grafana
     app.kubernetes.io/instance: grafana
-    app.kubernetes.io/version: "12.4.2"
+    app.kubernetes.io/version: "13.2.4"
     app.kubernetes.io/component: dashboard
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: grafana
         app.kubernetes.io/instance: grafana
-        app.kubernetes.io/version: "12.4.2"
+        app.kubernetes.io/version: "13.2.4"
         app.kubernetes.io/component: dashboard
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -29,9 +29,11 @@ spec:
         runAsUser: 472
         runAsGroup: 472
         fsGroup: 472
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: grafana
-          image: grafana/grafana:12.4.2
+          image: grafana/grafana:13.2.4
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -43,6 +45,10 @@ spec:
             - name: GF_PLUGINS_PREINSTALL_DISABLED
               value: "true"
             - name: GF_ANALYTICS_REPORTING_ENABLED
+              value: "false"
+            - name: GF_ANALYTICS_CHECK_FOR_UPDATES
+              value: "false"
+            - name: GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES
               value: "false"
             - name: GF_SECURITY_ADMIN_USER
               valueFrom:
@@ -102,6 +108,5 @@ spec:
           configMap:
             name: grafana-dashboards
         - name: data
-          # TODO: replace with a PersistentVolumeClaim — any dashboards or
-          # settings saved through the UI are lost on every pod restart with emptyDir.
+          # Ephemeral: dashboards and datasources are provisioned from ConfigMaps.
           emptyDir: {}

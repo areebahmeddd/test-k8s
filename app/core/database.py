@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import settings
 
-engine = create_async_engine(settings.database_url, echo=settings.debug)
+engine = create_async_engine(settings.database_url, echo=settings.debug, pool_pre_ping=True)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:  # pragma: no cover
+async def get_db() -> AsyncGenerator[AsyncSession]:  # pragma: no cover
     """Yield an async database session, closing it automatically after use."""
     async with AsyncSessionLocal() as session:
         yield session

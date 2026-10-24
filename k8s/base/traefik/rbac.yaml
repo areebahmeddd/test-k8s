@@ -26,10 +26,10 @@ rules:
   - apiGroups: [discovery.k8s.io]
     resources: [endpointslices]
     verbs: [get, list, watch]
-  - apiGroups: [extensions, networking.k8s.io]
+  - apiGroups: [networking.k8s.io]
     resources: [ingresses, ingressclasses]
     verbs: [get, list, watch]
-  - apiGroups: [extensions, networking.k8s.io]
+  - apiGroups: [networking.k8s.io]
     resources: [ingresses/status]
     verbs: [update]
 ---

@@ -1,41 +1,40 @@
-# Build:
-#   docker build -t todo-api:latest .
-#
-# Run (standalone with SQLite):
-#   docker run -d -p 8000:8000 --name todo-api --env-file .env todo-api:latest
-#
-# Run (with external PostgreSQL):
-#   docker run -d -p 8000:8000 --name todo-api --env-file .env \
-#     -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname \
-#     todo-api:latest
+# syntax=docker/dockerfile:1
 
-# Stage 1: Build the application with dependencies
-FROM python:3.11-slim AS builder
+FROM python:3.14.9-slim AS builder
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-# cache deps layer separately from source
-COPY pyproject.toml uv.lock* ./
-RUN uv sync --no-dev --no-install-project
+# Dependencies only: this layer is reused until pyproject.toml or uv.lock change.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --locked --no-dev --no-install-project
 
-COPY . .
-RUN uv sync --no-dev
 
-# Stage 2: Runtime image with only the necessary files
-FROM python:3.11-slim AS runtime
+FROM python:3.14.9-slim AS runtime
+
+# UID/GID 1000 match runAsUser/runAsGroup in the Kubernetes Deployment.
+RUN groupadd --gid 1000 app \
+ && useradd --uid 1000 --gid app --no-create-home --shell /usr/sbin/nologin app
 
 WORKDIR /app
 
-COPY --from=builder /app /app
+COPY --from=builder /app/.venv /app/.venv
+COPY alembic.ini ./
+COPY alembic ./alembic
+COPY app ./app
 
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-RUN adduser --disabled-password --no-create-home appuser
-USER appuser
+USER app
 
 EXPOSE 8000
 

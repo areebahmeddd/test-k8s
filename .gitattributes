@@ -1,14 +1,13 @@
-# Enforce LF line endings for all text files
+# Normalize line endings of all text files to LF.
 * text=auto eol=lf
 
-# Explicitly mark binary files
-*.png binary
-*.jpg binary
-*.jpeg binary
-
-# SOPS-encrypted secret files must be treated as binary — any byte-level
-# change (e.g. LF→CRLF on Windows checkout) breaks the SOPS MAC checksum.
+# SOPS-encrypted secrets must be kept byte for byte: any change, such as LF becoming CRLF
+# on a Windows checkout, breaks the SOPS MAC checksum.
 k8s/overlays/*/secrets/*.yaml binary
 
-# Exclude python files from language statistics
+# Leave the application, web UI and policy code out of GitHub's language statistics.
 *.py linguist-detectable=false
+*.js linguist-detectable=false
+*.css linguist-detectable=false
+*.html linguist-detectable=false
+*.rego linguist-detectable=false

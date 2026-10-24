@@ -1,11 +1,9 @@
 # Environment
 .venv/
 .env
-.env.local
 
 # SOPS age private key
 age.key
-k8s/argocd/sops-age-secret.yaml
 
 # Python
 __pycache__/
@@ -22,25 +20,13 @@ __pycache__/
 coverage.xml
 htmlcov/
 
-# Type checkers / linters
-.mypy_cache/
+# Tooling caches
 .ruff_cache/
+.tilt-dev/
 
-# Build / packaging
-dist/
-build/
-*.egg-info/
-
-# Logs
-*.log
-
-# Node (docs/)
-node_modules/
-
-# OS
+# OS / editor
 .DS_Store
 Thumbs.db
-
-# IDE / editor
 .idea/
 .vscode/
+kt/

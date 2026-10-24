@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: todo-api
     app.kubernetes.io/instance: todo-api
-    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/version: "1.1.0"
     app.kubernetes.io/component: api
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: todo-api
         app.kubernetes.io/instance: todo-api
-        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/version: "1.1.0"
         app.kubernetes.io/component: api
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -29,19 +29,55 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-      containers:
-        - name: todo-api
-          image: areebahmeddd/todo-api:1.0.0
-          imagePullPolicy: IfNotPresent # TODO: change to Always when pulling from a real container registry.
-          ports:
-            - name: http
-              containerPort: 8000
-              protocol: TCP
-          envFrom:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # Replicas starting together queue on an advisory lock (alembic/env.py).
+        - name: migrate
+          image: areebahmeddd/todo-api:1.1.0
+          imagePullPolicy: IfNotPresent
+          command: ["alembic", "upgrade", "head"]
+          envFrom: &envFrom
             - configMapRef:
                 name: todo-api-config
             - secretRef:
                 name: todo-api-secret
+          env: &env
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: todo-db-secret
+                  key: password
+            # Connect through the PgBouncer pooler using the CNPG owner credentials.
+            - name: DATABASE_URL
+              value: postgresql+asyncpg://$(DB_USER):$(DB_PASSWORD)@todo-db-pooler:5432/todos
+          resources: &resources
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext: &containerSecurityContext
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      containers:
+        - name: todo-api
+          image: areebahmeddd/todo-api:1.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom: *envFrom
+          env: *env
           readinessProbe:
             httpGet:
               path: /health
@@ -56,14 +92,5 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 30
             failureThreshold: 3
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
+          resources: *resources
+          securityContext: *containerSecurityContext

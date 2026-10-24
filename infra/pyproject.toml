@@ -1,0 +1,9 @@
+[project]
+name = "todo-k8s-infra"
+version = "1.0.0"
+description = "Pulumi bootstrap for todo-k8s: ArgoCD, namespaces and Secrets"
+requires-python = "==3.14.*"
+dependencies = [
+    "pulumi>=3.272.0",
+    "pulumi-kubernetes>=4.34.2",
+]

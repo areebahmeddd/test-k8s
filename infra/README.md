@@ -1,115 +1,54 @@
 # infra
 
-Pulumi program that bootstraps the todo-k8s cluster before ArgoCD takes over.
+A Pulumi program that bootstraps a cluster for GitOps. It is an alternative to `make k8s-deploy` that takes
+the Kubernetes Secrets from encrypted Pulumi config instead of the SOPS files.
 
-## Responsibility split
+| What it manages                                        | Source                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| ArgoCD, its ingress and policies, and the Applications | `k8s/argocd/<overlay>`, rendered by `kustomize.v2.Directory` |
+| The `todo-app` and `monitoring` namespaces and Secrets | `src/cluster_secrets.py`                                     |
+| Everything else (CNPG, the app, monitoring)            | ArgoCD, syncing `k8s/overlays/<overlay>`                     |
 
-| Layer                                   | Tool            | Source of truth                           |
-| --------------------------------------- | --------------- | ----------------------------------------- |
-| CNPG operator (Helm Release)            | Pulumi          | `infra/src/cnpg.py`                       |
-| ArgoCD install + patches                | Pulumi          | `k8s/argocd/` (rendered at plan time)     |
-| Application namespaces + Secrets        | Pulumi          | `infra/src/secrets.py`                    |
-| todo-api, postgres, traefik, monitoring | ArgoCD (GitOps) | `k8s/overlays/dev` or `k8s/overlays/prod` |
-
-CNPG is installed as a direct Helm Release rather than an ArgoCD Application so
-that CNPG CRDs are registered synchronously before ArgoCD syncs the cluster
-overlay, which contains `Cluster` and `Pooler` CRs.
-
-## Prerequisites
-
-- Python >= 3.11
-- [Pulumi CLI](https://pulumi.com/docs/install/) >= 3.240.0
-- `kubectl` configured to target the cluster
-- `kustomize` on PATH (invoked by `src/argocd.py` at plan time)
+The namespaces and Secrets are created first, so ArgoCD's first sync finds them in place. ArgoCD is then
+applied without waiting for its resources to become ready, because ArgoCD reconciles them itself and its
+Ingress only gets an address once Traefik is running. The stack name selects the overlay through
+`Pulumi.dev.yaml` and `Pulumi.prod.yaml`.
 
 ## Setup
 
-### 1. Install dependencies
+You need the Pulumi CLI and `kubectl` access to the target cluster. Dependencies are managed with uv, through
+`runtime.options.toolchain: uv` in `Pulumi.yaml`.
 
 ```bash
-make pulumi-init
-```
-
-Creates `infra/venv` and installs `requirements.txt`.
-
-### 2. Initialise a stack
-
-```bash
+make pulumi-install          # runs `pulumi install`, which creates infra/.venv from uv.lock
 cd infra
-pulumi stack init dev   # or: prod
-```
+pulumi stack init dev        # or prod
 
-### 3. Set required secrets
-
-All secret values are stored encrypted in Pulumi state and are never written to disk or committed to the repository.
-
-```bash
-cd infra
-
-pulumi config set --secret todo-k8s-infra:db_username admin
-pulumi config set --secret todo-k8s-infra:db_password <value>
-pulumi config set --secret todo-k8s-infra:api_database_url \
-  "postgresql+asyncpg://admin:<pw>@todo-db-rw.todo-app.svc.cluster.local:5432/todos"
-pulumi config set --secret todo-k8s-infra:api_secret_key <hex-32-bytes>
-pulumi config set --secret todo-k8s-infra:grafana_admin_user admin
-pulumi config set --secret todo-k8s-infra:grafana_admin_password <value>
-pulumi config set --secret todo-k8s-infra:slack_webhook_url https://hooks.slack.com/...
-```
-
-Generate values where needed:
-
-```bash
-# db_password / grafana_admin_password
-openssl rand -hex 16
-
-# api_secret_key
-python -c "import secrets; print(secrets.token_hex(32))"
+# db_username must match the owner in k8s/base/postgres/cluster.yaml.
+pulumi config set --secret db_username admin
+pulumi config set --secret db_password "$(openssl rand -hex 16)"
+pulumi config set --secret api_secret_key "$(openssl rand -hex 32)"
+pulumi config set --secret grafana_admin_user admin
+pulumi config set --secret grafana_admin_password "$(openssl rand -hex 16)"
+pulumi config set --secret slack_webhook_url https://hooks.slack.com/services/...
 ```
 
 ## Usage
 
 ```bash
-# Deploy (shows diff, prompts for confirmation)
+pulumi preview --stack dev
 make pulumi-up OVERLAY=dev
-
-# Preview without applying
-cd infra && pulumi preview --stack dev
-
-# Tear down all Pulumi-managed resources
 make pulumi-destroy OVERLAY=dev
 ```
 
-## Resource graph
+## Config
 
-CNPG and ArgoCD run in parallel. Secrets depend on ArgoCD completing so
-namespaces exist before secrets are created.
-
-```
-pulumi up
-  +-- cloudnative-pg    Helm Release  (atomic, waits for CRDs)
-  +-- argocd            ConfigGroup   (kustomize build k8s/argocd/)
-        |
-        v
-  +-- todo-app-ns       Namespace
-  +-- monitoring-ns     Namespace
-        |
-        v
-  +-- todo-api-secret, todo-db-secret         (todo-app namespace)
-  +-- grafana-secret, alertmanager-secret     (monitoring namespace)
-```
-
-After `pulumi up` completes, ArgoCD auto-syncs the selected overlay from Git
-and deploys the full application stack.
-
-## Stack config reference
-
-| Key                      | Type   | Description                                         |
-| ------------------------ | ------ | --------------------------------------------------- |
-| `overlay`                | string | Kustomize overlay: `dev` or `prod`. Default: `dev`  |
-| `db_username`            | secret | PostgreSQL admin username (CloudNativePG bootstrap) |
-| `db_password`            | secret | PostgreSQL admin password                           |
-| `api_database_url`       | secret | Full asyncpg connection URL for todo-api            |
-| `api_secret_key`         | secret | 32-byte hex JWT signing key                         |
-| `grafana_admin_user`     | secret | Grafana admin username                              |
-| `grafana_admin_password` | secret | Grafana admin password                              |
-| `slack_webhook_url`      | secret | Alertmanager Slack incoming webhook URL             |
+| Key                      | Type   | Description                                                             |
+| ------------------------ | ------ | ----------------------------------------------------------------------- |
+| `overlay`                | string | `dev` or `prod`, set in the stack file                                  |
+| `db_username`            | secret | PostgreSQL owner created by CloudNativePG; must be `admin`              |
+| `db_password`            | secret | Password for that owner; the API uses both to connect through PgBouncer |
+| `api_secret_key`         | secret | Key used to sign JWTs                                                   |
+| `grafana_admin_user`     | secret | Grafana admin user                                                      |
+| `grafana_admin_password` | secret | Grafana admin password                                                  |
+| `slack_webhook_url`      | secret | Slack webhook that Alertmanager posts to                                |

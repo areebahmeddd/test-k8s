@@ -1,36 +1,25 @@
-import subprocess
+from collections.abc import Sequence
 from pathlib import Path
 
 import pulumi
 import pulumi_kubernetes as k8s
-from pulumi_kubernetes.yaml.v2 import ConfigGroup
+from pulumi_kubernetes.kustomize.v2 import Directory
 
-# Absolute path to k8s/argocd/, computed from this file's location.
-_ARGOCD_DIR: Path = Path(__file__).resolve().parent.parent.parent / "k8s" / "argocd"
-
-
-def _render_kustomization(kustomize_dir: Path) -> str:
-    result = subprocess.run(
-        ["kustomize", "build", str(kustomize_dir)],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=60,
-    )
-    return result.stdout
+# k8s/argocd/ stays the single source of truth for the ArgoCD bootstrap.
+_ARGOCD_DIR = Path(__file__).resolve().parents[2] / "k8s" / "argocd"
 
 
-def deploy_argocd(provider: k8s.Provider) -> ConfigGroup:
-    """Render k8s/argocd/ with Kustomize and apply all resources.
+def deploy_argocd(
+    provider: k8s.Provider, overlay: str, depends_on: Sequence[pulumi.Resource]
+) -> Directory:
+    """Apply k8s/argocd/<overlay>: ArgoCD itself plus the CNPG and todo-app Applications.
 
-    k8s/argocd/ is the single source of truth and is not duplicated here.
-    Resources include: argocd namespace, ArgoCD v3.3.8 install, server.insecure
-    patch, sops-age Secret, repo-server SOPS volume, Ingress, NetworkPolicy,
-    and todo-app-dev/prod Application CRDs.
+    Readiness is not awaited: ArgoCD reconciles its own resources, and its Ingress only
+    gets a load-balancer address once Traefik (deployed by ArgoCD) is running.
     """
-    rendered_yaml = _render_kustomization(_ARGOCD_DIR)
-    return ConfigGroup(
+    return Directory(
         "argocd",
-        yaml=rendered_yaml,
-        opts=pulumi.ResourceOptions(provider=provider),
+        directory=str(_ARGOCD_DIR / overlay),
+        skip_await=True,
+        opts=pulumi.ResourceOptions(provider=provider, depends_on=list(depends_on)),
     )

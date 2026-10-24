@@ -32,6 +32,20 @@ data:
         url: http://tempo:3200
         editable: false
         jsonData:
-          tracesToLogs:
+          tracesToLogsV2:
             datasourceUid: loki
             filterByTraceID: true
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+          tracesToMetrics:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+
+      - name: Alertmanager
+        type: alertmanager
+        uid: alertmanager
+        url: http://alertmanager:9093
+        editable: false
+        jsonData:
+          implementation: prometheus

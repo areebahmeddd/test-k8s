@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: loki
     app.kubernetes.io/instance: loki
-    app.kubernetes.io/version: "3.7.1"
+    app.kubernetes.io/version: "3.7.9"
     app.kubernetes.io/component: logging
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,7 +19,7 @@ spec:
       labels:
         app.kubernetes.io/name: loki
         app.kubernetes.io/instance: loki
-        app.kubernetes.io/version: "3.7.1"
+        app.kubernetes.io/version: "3.7.9"
         app.kubernetes.io/component: logging
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
@@ -29,9 +29,11 @@ spec:
         runAsUser: 10001
         runAsGroup: 10001
         fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: loki
-          image: grafana/loki:3.7.1
+          image: grafana/loki:3.7.9
           imagePullPolicy: IfNotPresent
           args:
             - -config.file=/etc/loki/local-config.yaml
@@ -75,6 +77,5 @@ spec:
           configMap:
             name: loki-config
         - name: data
-          # TODO: replace with a PersistentVolumeClaim — all ingested logs
-          # are lost on every pod restart with emptyDir.
+          # Ephemeral: logs are lost on restart (use a PVC or object storage beyond a lab).
           emptyDir: {}

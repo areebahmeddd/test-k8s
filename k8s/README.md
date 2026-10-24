@@ -1,98 +1,42 @@
-# Kubernetes Manifests
+# Kubernetes manifests
 
-Kustomize base/overlay layout, managed in production via [ArgoCD](https://argo-cd.readthedocs.io).
+Kustomize bases with `dev` and `prod` overlays, deployed by ArgoCD for GitOps or by Tilt for local
+development. Setup, access and networking are covered in [docs/KUBERNETES.md](../docs/KUBERNETES.md).
 
-## Directory Layout
-
-```
+```text
 k8s/
-├── argocd/                  # ArgoCD installation + Application CRs
-│   ├── applications/        # One Application CR per environment (dev, prod)
-│   ├── argocd-server-ingress.yaml
-│   ├── kustomization.yaml
-│   ├── network-policy.yaml
-│   ├── namespace.yaml
-│   └── sops-age-secret.yaml # AGE private key for SOPS decryption (gitignored plaintext)
-│
-├── base/                    # Environment-agnostic resource definitions
-│   ├── app/                 # Todo API: Deployment, Service, Ingress, ConfigMap, RBAC
-│   ├── monitoring/          # Grafana Alloy, Loki, Tempo, Prometheus, Grafana, Alertmanager
-│   ├── postgres/            # CloudNativePG Cluster + PgBouncer Pooler
-│   └── traefik/             # Traefik IngressClass, Helm release, dashboard ingress
-│
-└── overlays/                # Environment-specific patches on top of base
-    ├── dev/                 # dev branch → no HPA, no host patches, SQLite-sized PG
-    │   ├── kustomization.yaml
-    │   ├── postgres-patch.yaml
-    │   └── secrets/         # SOPS-encrypted Kubernetes Secrets (never commit plaintext)
-    └── prod/                # prod branch → HPA, named hosts (*.1mindlabs.org), pooler
-        ├── kustomization.yaml
-        ├── hpa-todo-api.yaml
-        ├── pooler-patch.yaml
-        ├── postgres-patch.yaml
-        └── secrets/         # SOPS-encrypted Kubernetes Secrets
+├── argocd/                 ArgoCD bootstrap
+│   ├── base/               ArgoCD install (v3.5.6), server ingress, NetworkPolicies
+│   │   └── applications/   The cloudnativepg (Helm chart) and todo-app Applications
+│   ├── dev/                todo-app tracks branch dev and k8s/overlays/dev; host argocd.localhost
+│   └── prod/               todo-app tracks branch prod and k8s/overlays/prod; host argocd.1mindlabs.org
+├── base/                   Resources shared by both environments
+│   ├── app/                todo-api Deployment with its migrate init container, Service, Ingress,
+│   │                       ConfigMap, ServiceAccount and the namespace's NetworkPolicies
+│   ├── postgres/           CloudNativePG Cluster and PgBouncer Pooler
+│   ├── traefik/            Traefik Deployment, Service, IngressClass, RBAC and dashboard Ingress
+│   └── monitoring/         alloy, loki, tempo, prometheus, alertmanager, grafana and NetworkPolicies
+└── overlays/
+    ├── dev/                *.localhost ingress hosts, plus secrets/
+    └── prod/               *.1mindlabs.org hosts, HPA, more database and pooler instances, plus secrets/
 ```
 
-## How Kustomize Layering Works
+## Overlay differences
 
-```
-base/app  +  base/postgres  +  base/monitoring  +  base/traefik
-                              │
-                    overlays/dev  or  overlays/prod
-                    (patches, additional resources, host names)
-```
+|                      | dev                                  | prod                                 |
+| -------------------- | ------------------------------------ | ------------------------------------ |
+| Ingress hosts        | `*.localhost`                        | `*.1mindlabs.org`                    |
+| `todo-api` replicas  | 1                                    | 2 to 4, set by the HPA               |
+| PostgreSQL instances | 1, with 5Gi data, 1Gi WAL and no PDB | 3, with 50Gi data, 5Gi WAL and a PDB |
+| PgBouncer instances  | 1                                    | 2                                    |
 
-`base/` holds canonical resource definitions with no environment-specific values.  
-`overlays/<env>/` patches only what differs (replica counts, ingress hosts, DB sizing).  
-Secrets are **never** in base or overlays as plaintext; they are SOPS-encrypted and applied out-of-band:
+Each overlay's `secrets/` folder holds SOPS-encrypted Secrets. They are deliberately left out of
+`kustomization.yaml`; `make k8s-secrets` decrypts and applies them.
+
+## Commands
 
 ```bash
-sops -d k8s/overlays/dev/secrets/todo-api-secret.yaml | kubectl apply -f -
+kubectl kustomize k8s/overlays/dev      # render an overlay
+make validate                           # build, schema check, SOPS check and policies
+make k8s-deploy OVERLAY=dev             # ArgoCD bootstrap plus secrets
 ```
-
-## ArgoCD GitOps Flow
-
-```
-GitHub (dev branch)  →  ArgoCD Application: todo-app-dev  →  k8s/overlays/dev
-GitHub (prod branch) →  ArgoCD Application: todo-app-prod →  k8s/overlays/prod
-```
-
-Both applications use `automated` sync with `prune: true` and `selfHeal: true`.  
-ArgoCD itself is bootstrapped via `k8s/argocd/kustomization.yaml` (one-time manual apply).
-
-## Quick Commands
-
-> All `make` targets wrap the commands below. See the root `Makefile` for the full list.
-
-```bash
-# Preview rendered manifests (dev)
-kubectl kustomize k8s/overlays/dev
-
-# Deploy to dev cluster
-kubectl apply -k k8s/overlays/dev
-
-# Deploy ArgoCD bootstrap (once per cluster)
-kubectl apply -k k8s/argocd
-
-# Check sync status
-kubectl get applications -n argocd
-```
-
-## Components
-
-| Base component    | Provides                                                                     |
-| ----------------- | ---------------------------------------------------------------------------- |
-| `base/app`        | Deployment, Service, Ingress, ConfigMap, ServiceAccount                      |
-| `base/postgres`   | CloudNativePG `Cluster` CR (primary database)                                |
-| `base/monitoring` | OTEL traces (Tempo), logs (Loki), metrics (Prometheus), dashboards (Grafana) |
-| `base/traefik`    | Ingress controller routing external traffic to `todo-api` Service            |
-
-## Further Reading
-
-| Topic                          | Document                                                      |
-| ------------------------------ | ------------------------------------------------------------- |
-| Full cluster setup walkthrough | [docs/markdown/SETUP-k8s.md](../docs/markdown/SETUP-k8s.md)   |
-| Ingress, DNS, and TLS          | [docs/markdown/NETWORKING.md](../docs/markdown/NETWORKING.md) |
-| Observability stack            | [docs/markdown/MONITORING.md](../docs/markdown/MONITORING.md) |
-| k9s cluster navigation         | [docs/markdown/K9S.md](../docs/markdown/K9S.md)               |
-| Infra provisioning (Pulumi)    | [infra/README.md](../infra/README.md)                         |

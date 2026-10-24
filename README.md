@@ -1,114 +1,111 @@
-# Todo API
+# Todo API on Kubernetes
 
-A REST API for managing todos with user authentication. Built with FastAPI, SQLAlchemy (async), and JWT-based auth using short-lived access tokens and rotating refresh tokens.
+A small FastAPI todo API with JWT authentication, rotating refresh tokens, async SQLAlchemy and Alembic. It
+serves as a hands-on project for the CNCF ecosystem: GitOps with ArgoCD, PostgreSQL with CloudNativePG, Traefik
+ingress, Calico NetworkPolicies, SOPS secrets, OPA policies, Tilt, Pulumi and an OpenTelemetry and Grafana
+observability stack.
 
 ## Roadmap
 
-- [ ] Migrate observability stack to LGTM (Loki, Grafana, Tempo, Mimir)
-- [ ] Migrate policy engine from OPA to Kyverno
-- [ ] Service mesh with Linkerd (mTLS, traffic policies, observability)
-- [ ] KEDA for event-driven autoscaling of the todo-api deployment
-- [ ] Authentik as the identity provider (SSO, OIDC, Grafana/ArgoCD login)
-- [ ] Litmus Chaos for chaos engineering experiments
+- [ ] TLS with cert-manager, and authentication for the internal tool ingresses
+- [ ] Move the policy checks from OPA and conftest to Kyverno
+- [ ] Service mesh with Linkerd (mTLS and traffic policies)
+- [ ] Event-driven autoscaling of `todo-api` with KEDA
+- [ ] Authentik as the identity provider, with single sign-on for Grafana and ArgoCD
+- [ ] Chaos experiments with LitmusChaos
 
 ## Stack
 
-| Layer      | Technology                              |
-| ---------- | --------------------------------------- |
-| Framework  | FastAPI (async)                         |
-| ORM        | SQLAlchemy 2 with async engine          |
-| Database   | PostgreSQL (prod) / SQLite (dev, tests) |
-| Auth       | PyJWT (HS256) + bcrypt                  |
-| Migrations | Alembic                                 |
-| Packaging  | uv                                      |
-| Linting    | Ruff                                    |
-| Tests      | pytest + pytest-asyncio + httpx         |
-| Metrics    | Prometheus + Alertmanager               |
-| Logs       | Loki + Promtail                         |
-| Traces     | Tempo + OTel Collector (contrib)        |
-| Dashboards | Grafana                                 |
+| Layer           | Technology                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| API             | Python 3.14, FastAPI, Pydantic 2, SQLAlchemy 2.0 (async), Alembic                                   |
+| Authentication  | PyJWT (HS256) access tokens, opaque rotating refresh tokens, bcrypt                                 |
+| Tooling         | uv, Ruff, pytest, pre-commit                                                                        |
+| Database        | PostgreSQL 18 on CloudNativePG 1.30 with PgBouncer; SQLite for tests                                |
+| Delivery        | Kustomize, ArgoCD 3.5, Tilt for local development, Pulumi as an optional bootstrap                  |
+| Networking      | Traefik 3.7, Calico NetworkPolicies (default deny)                                                  |
+| Secrets, policy | SOPS with age, OPA policies with conftest, kubeconform                                              |
+| Observability   | OpenTelemetry and Alloy, Tempo 3 for traces, Loki for logs, Prometheus and Alertmanager, Grafana 13 |
 
-- See [docs/markdown/SETUP-py.md](docs/markdown/SETUP-py.md) for local Python setup, Docker, migrations, and environment configuration.
-- See [docs/markdown/SETUP-k8s.md](docs/markdown/SETUP-k8s.md) for Kubernetes deployment.
-- See [docs/markdown/MONITORING.md](docs/markdown/MONITORING.md) for the observability stack (metrics, logs, traces).
-
-## API Endpoints
-
-### Auth — `/api/v1/auth`
-
-| Method | Path        | Description                                      |
-| ------ | ----------- | ------------------------------------------------ |
-| POST   | `/register` | Create a new user account                        |
-| POST   | `/login`    | Authenticate and receive access + refresh tokens |
-| POST   | `/refresh`  | Exchange a refresh token for a new token pair    |
-| POST   | `/logout`   | Revoke the current refresh token                 |
-| GET    | `/me`       | Return the currently authenticated user          |
-
-### Todos — `/api/v1/todos`
-
-| Method | Path    | Description                       |
-| ------ | ------- | --------------------------------- |
-| GET    | `/`     | List all todos for the caller     |
-| POST   | `/`     | Create a new todo                 |
-| GET    | `/{id}` | Get a single todo by ID           |
-| PATCH  | `/{id}` | Update fields on an existing todo |
-| DELETE | `/{id}` | Delete a todo                     |
-
-All todo endpoints require a valid `Authorization: Bearer <access_token>` header. Users can only access their own todos.
-
-### Other
-
-| Method | Path      | Description    |
-| ------ | --------- | -------------- |
-| GET    | `/health` | Liveness check |
-
-## Quick Start
-
-### Docker
+## Quick start
 
 ```bash
-make up
-# or
-docker compose up
+cp .env.example .env        # then set SECRET_KEY, for example with: openssl rand -hex 32
+uv sync
+uv run alembic upgrade head
+uv run fastapi dev app/main.py
 ```
 
-The `api` service waits for the `db` service health check before starting. Database URL is injected via environment in `docker-compose.yaml`.
-
-Monitoring services (Prometheus, Loki, Tempo, Grafana, etc.) are defined in `docker-compose.yaml` but commented out — they are deployed separately via Kubernetes. (You can uncomment them for local testing)
-
-### Running Tests
+The web UI is at <http://localhost:8000> and the interactive API docs are at <http://localhost:8000/docs>.
+The tests need no services:
 
 ```bash
 make test
-# or
-uv run pytest -v
 ```
 
-Tests use an in-memory SQLite database and a fresh schema per test session. No running server or database required.
+Every `make` target is a shortcut for plain commands: `make -n <target>` prints them without running anything.
 
-## Project Layout
+### Docker
 
+With PostgreSQL, through Docker Compose (migrations run on start and code changes reload the server):
+
+```bash
+make up              # docker compose up -d --build; stop with: make down
 ```
-app/
-  main.py               Application factory, lifespan, CORS
-  core/
-    config.py           Settings (loaded from .env)
-    database.py         Async engine, session, get_db dependency
-    security.py         Password hashing and JWT utilities
-  models/               SQLAlchemy ORM models
-  schemas/              Pydantic request/response schemas
-  api/
-    deps.py             FastAPI dependencies (current user)
-    v1/
-      auth.py           Auth route handlers
-      todos.py          Todo route handlers
-      router.py         Router registration
-alembic/                Migration environment and versions
-tests/
-  conftest.py           Shared fixtures
-  unit/                 Pure function tests
-  integration/          Full HTTP endpoint tests
-docs/
-  SETUP.md              Detailed local setup guide
-  architecture.md       DB schema and auth flow reference
+
+Or the image on its own, with SQLite. The container runs as a non-root user, so the database goes in `/tmp`:
+
+```bash
+docker build -t todo-api:local .
+docker run --rm -p 8000:8000 --env-file .env -e DATABASE_URL=sqlite+aiosqlite:////tmp/todo.db \
+  todo-api:local sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 ```
+
+### Kubernetes
+
+```bash
+make cluster-up      # minikube with Calico
+tilt up              # build, deploy the dev overlay, rebuild on every change
+```
+
+[docs/KUBERNETES.md](docs/KUBERNETES.md) covers every deployment option: Tilt, plain `kubectl`, GitOps with
+ArgoCD, and Pulumi.
+
+## API
+
+| Method | Path                    | Description                                                       |
+| ------ | ----------------------- | ----------------------------------------------------------------- |
+| POST   | `/api/v1/auth/register` | Create an account                                                 |
+| POST   | `/api/v1/auth/login`    | Exchange a username and password (OAuth2 form) for a token pair   |
+| POST   | `/api/v1/auth/refresh`  | Exchange a refresh token for a new token pair                     |
+| POST   | `/api/v1/auth/logout`   | Revoke a refresh token                                            |
+| GET    | `/api/v1/auth/me`       | Return the current user                                           |
+| GET    | `/api/v1/todos`         | List your todos, newest first (`offset` and `limit`, at most 100) |
+| POST   | `/api/v1/todos`         | Create a todo                                                     |
+| GET    | `/api/v1/todos/{id}`    | Get a todo                                                        |
+| PATCH  | `/api/v1/todos/{id}`    | Update some fields of a todo                                      |
+| DELETE | `/api/v1/todos/{id}`    | Delete a todo                                                     |
+| GET    | `/health`               | Health check used by the Kubernetes probes                        |
+| GET    | `/metrics`              | Prometheus metrics                                                |
+
+The todo routes require an `Authorization: Bearer <access_token>` header. Another user's todo returns 404.
+
+## Repository layout
+
+```text
+app/            FastAPI app: routes, configuration, database, security, telemetry, models, schemas, web UI
+alembic/        Database migrations
+tests/          Unit and integration tests
+k8s/            Kustomize bases, dev and prod overlays, ArgoCD bootstrap (see k8s/README.md)
+infra/          Pulumi bootstrap program
+policy/         OPA policies and their tests
+docs/           Architecture, Kubernetes, observability, troubleshooting and k9s guides
+```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md): code layout, database schema, authentication, design decisions
+- [Kubernetes](docs/KUBERNETES.md): cluster setup, deployment options, secrets, networking, validation
+- [Observability](docs/OBSERVABILITY.md): metrics, logs, traces, alerts and dashboards
+- [Troubleshooting](docs/TROUBLESHOOTING.md) and a [k9s cheat sheet](docs/K9S.md)
+- [Pulumi bootstrap](infra/README.md)

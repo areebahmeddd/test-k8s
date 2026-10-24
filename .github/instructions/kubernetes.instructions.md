@@ -1,174 +1,25 @@
 ---
-name: Kubernetes Best Practices
-description: "Use when writing or reviewing Kubernetes YAML manifests, Kustomize overlays, or Helm templates. Covers resource limits, health probes, security contexts, labels, PodDisruptionBudgets, and production readiness. Triggers on: k8s manifest, deployment yaml, kubernetes config, kustomize overlay, resource limits, health probe, security context."
+name: Kubernetes
+description: Conventions for Kustomize manifests, overlays and the ArgoCD bootstrap.
 applyTo: "k8s/**"
 ---
 
-# Kubernetes Best Practices
+# Kubernetes
 
-## Resource Requests and Limits (Required on Every Container)
-
-```yaml
-resources:
-  requests: # Scheduler guarantee — what K8s reserves on the node
-    cpu: "100m"
-    memory: "128Mi"
-  limits: # Hard cap — OOMKill if memory exceeded; throttle if CPU exceeded
-    cpu: "500m"
-    memory: "512Mi"
-```
-
-Rules:
-
-- Never set limits without requests
-- Never omit both — pods are evicted first under node pressure
-- Set memory limit close to request (loose limits waste node capacity)
-- CPU limits cause throttling even when node has spare — be generous or omit CPU limit if latency matters
-
-## Health Probes (Required)
-
-```yaml
-livenessProbe: # Restart container if this fails (deadlock detection)
-  httpGet:
-    path: /health
-    port: 8000
-  initialDelaySeconds: 15
-  periodSeconds: 20
-  failureThreshold: 3
-
-readinessProbe: # Remove pod from Service endpoints until ready
-  httpGet:
-    path: /health
-    port: 8000
-  initialDelaySeconds: 5
-  periodSeconds: 10
-  failureThreshold: 3
-
-startupProbe: # For slow-starting pods — disables liveness until started
-  httpGet:
-    path: /health
-    port: 8000
-  failureThreshold: 30
-  periodSeconds: 10
-```
-
-## Security Context (Required)
-
-```yaml
-securityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  seccompProfile:
-    type: RuntimeDefault
-  capabilities:
-    drop: ["ALL"]
-```
-
-If the app needs a writable directory, add a `tmpfs` volume:
-
-```yaml
-volumes:
-  - name: tmp
-    emptyDir: {}
-volumeMounts:
-  - name: tmp
-    mountPath: /tmp
-```
-
-## Required Labels on All Resources
-
-```yaml
-labels:
-  app.kubernetes.io/name: todo-api
-  app.kubernetes.io/instance: todo-api-dev
-  app.kubernetes.io/version: "1.2.3" # image tag
-  app.kubernetes.io/component: api # api | db | worker | cache
-  app.kubernetes.io/part-of: todo-app
-  app.kubernetes.io/managed-by: kustomize
-```
-
-## Kustomize Conventions (this project)
-
-- Base manifests: `k8s/base/` — no env-specific values
-- Env patches: `k8s/overlays/dev/` and `k8s/overlays/prod/`
-- Image tag overrides: use `images:` transformer in overlay `kustomization.yaml`
-- Secrets: never commit to Git — reference `.env` files listed in `.gitignore`, or use external-secrets operator
-- `namePrefix` / `nameSuffix` to namespace resource names between envs
-
-## Field Ordering
-
-Consistent ordering makes diffs readable and reviews predictable.
-
-**Every resource document:**
-
-```
-apiVersion → kind → metadata (name → namespace → labels → annotations) → spec
-```
-
-**Deployment `spec:`**
-
-```
-replicas → selector → template
-```
-
-**Pod `spec:` (inside `template.spec`):**
-
-```
-serviceAccountName → securityContext (pod-level) → initContainers → containers → volumes
-```
-
-**Container fields:**
-
-```
-name → image → imagePullPolicy → command → args → ports
-→ env / envFrom → volumeMounts
-→ readinessProbe → livenessProbe → startupProbe
-→ resources → securityContext (container-level)
-```
-
-> Pod-level `securityContext` goes **before** `containers`. Container-level `securityContext` goes **after** `resources`
-
-**Service `spec:`**
-
-```
-type → selector → ports (name → port → targetPort → protocol)
-```
-
-**Ingress `spec:`**
-
-```
-ingressClassName → tls → rules
-```
-
-**`kustomization.yaml`:**
-
-```
-apiVersion → kind → namespace → resources → patches → images → configMapGenerator → secretGenerator
-```
-
-Resource listing order within a `kustomization.yaml`:
-
-```
-namespace → ServiceAccount → ClusterRole → ClusterRoleBinding → ConfigMap → Deployment → Service → Ingress
-```
-
-Overlay `resources:` layer order (infrastructure before application):
-
-```
-traefik (ingress controller) → postgres (data) → app → monitoring (observability)
-```
-
-## Production Checklist
-
-- [ ] Resource `requests` AND `limits` set on every container
-- [ ] `livenessProbe` and `readinessProbe` set
-- [ ] `runAsNonRoot: true` set
-- [ ] `allowPrivilegeEscalation: false` set
-- [ ] `readOnlyRootFilesystem: true` set (with tmpfs if needed)
-- [ ] `capabilities.drop: ["ALL"]` set
-- [ ] No secrets in ConfigMaps or inline `env.value` fields
-- [ ] `PodDisruptionBudget` defined for critical services (minimum 1 available)
-- [ ] `topologySpreadConstraints` set for deployments with >1 replica (HA across zones)
-- [ ] `terminationGracePeriodSeconds` set to allow graceful shutdown
+- `k8s/base/<component>/` is shared by every environment. Hosts, replica counts and sizing are patched in
+  `k8s/overlays/dev` and `k8s/overlays/prod`. The ArgoCD bootstrap in `k8s/argocd/` follows the same pattern.
+- Every container, init containers included, sets CPU and memory requests and limits, a pinned image tag,
+  `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` and, where possible,
+  `readOnlyRootFilesystem: true`. Long-running containers also get readiness and liveness probes. Pods run as
+  non-root with `seccompProfile: RuntimeDefault`.
+- Label everything with `app.kubernetes.io/name`, `instance`, `component`, `part-of` and `managed-by`;
+  `app.kubernetes.io/version` matches the image tag.
+- Each namespace denies all traffic by default. A new traffic path needs an egress rule on the client and an
+  ingress rule on the server, in each namespace's `network-policy.yaml`. Rules use the pod's port, not the
+  Service's. Kubernetes API egress allows both the service CIDR and the minikube node IP.
+- Secrets never go into ConfigMaps or plain manifests. Add them SOPS-encrypted under `overlays/<env>/secrets/`.
+- Order fields as `apiVersion`, `kind`, `metadata`, `spec`. Inside a container: `name`, `image`,
+  `imagePullPolicy`, `command`/`args`, `ports`, `env`/`envFrom`, `volumeMounts`, probes, `resources`,
+  `securityContext`.
+- Check every change with `make validate`: Kustomize builds, kubeconform with CRD schemas, the SOPS check, and
+  the OPA policies with their unit tests.

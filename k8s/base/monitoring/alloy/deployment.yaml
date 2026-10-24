@@ -5,8 +5,8 @@ metadata:
   labels:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/instance: alloy
-    app.kubernetes.io/version: "v1.15.0"
-    app.kubernetes.io/component: log-collector
+    app.kubernetes.io/version: "v1.21.2"
+    app.kubernetes.io/component: collector
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
 spec:
@@ -19,8 +19,8 @@ spec:
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/instance: alloy
-        app.kubernetes.io/version: "v1.15.0"
-        app.kubernetes.io/component: log-collector
+        app.kubernetes.io/version: "v1.21.2"
+        app.kubernetes.io/component: collector
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
     spec:
@@ -30,9 +30,11 @@ spec:
         runAsUser: 473
         runAsGroup: 473
         fsGroup: 473
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: alloy
-          image: grafana/alloy:v1.15.0
+          image: grafana/alloy:v1.21.2
           imagePullPolicy: IfNotPresent
           args:
             - run
@@ -82,6 +84,5 @@ spec:
           configMap:
             name: alloy-config
         - name: storage
-          # TODO: replace with a PersistentVolumeClaim — position cursors
-          # are lost on restart, causing brief duplicate log ingestion into Loki.
+          # Ephemeral: log positions reset on restart, which can re-send recent lines.
           emptyDir: {}

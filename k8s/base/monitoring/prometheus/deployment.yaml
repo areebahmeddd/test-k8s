@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: prometheus
     app.kubernetes.io/instance: prometheus
-    app.kubernetes.io/version: "3.11.1"
+    app.kubernetes.io/version: "3.15.1"
     app.kubernetes.io/component: metrics
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
@@ -19,19 +19,22 @@ spec:
       labels:
         app.kubernetes.io/name: prometheus
         app.kubernetes.io/instance: prometheus
-        app.kubernetes.io/version: "3.11.1"
+        app.kubernetes.io/version: "3.15.1"
         app.kubernetes.io/component: metrics
         app.kubernetes.io/part-of: todo-k8s
         app.kubernetes.io/managed-by: kustomize
     spec:
+      serviceAccountName: prometheus
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
         runAsGroup: 65534
         fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: prometheus
-          image: prom/prometheus:v3.11.1
+          image: prom/prometheus:v3.15.1
           imagePullPolicy: IfNotPresent
           args:
             - --config.file=/etc/prometheus/prometheus.yml
@@ -78,6 +81,5 @@ spec:
           configMap:
             name: prometheus-config
         - name: data
-          # TODO: replace with a PersistentVolumeClaim — the TSDB (all
-          # scraped metrics history) is lost on every pod restart with emptyDir.
+          # Ephemeral: metrics history is lost on restart (use a PVC beyond a lab).
           emptyDir: {}

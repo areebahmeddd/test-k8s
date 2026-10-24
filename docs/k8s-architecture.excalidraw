@@ -36,7 +36,6 @@
       "containerId": null,
       "originalText": "Todo API - Kubernetes Architecture"
     },
-
     {
       "id": "r-client",
       "type": "rectangle",
@@ -53,12 +52,23 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 102,
       "version": 1,
       "versionNonce": 102,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-client" }, { "type": "arrow", "id": "a-client-traefik" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-client"
+        },
+        {
+          "type": "arrow",
+          "id": "a-client-traefik"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -96,7 +106,6 @@
       "containerId": "r-client",
       "originalText": "Client"
     },
-
     {
       "id": "bg-cluster",
       "type": "rectangle",
@@ -113,7 +122,9 @@
       "roughness": 0,
       "opacity": 40,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 104,
       "version": 1,
       "versionNonce": 104,
@@ -156,7 +167,6 @@
       "containerId": null,
       "originalText": "minikube cluster: todo-k8s"
     },
-
     {
       "id": "bg-traefik-ns",
       "type": "rectangle",
@@ -173,7 +183,9 @@
       "roughness": 0,
       "opacity": 60,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 1041,
       "version": 1,
       "versionNonce": 1041,
@@ -232,12 +244,31 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 1043,
       "version": 1,
       "versionNonce": 1043,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-traefik" }, { "type": "arrow", "id": "a-client-traefik" }, { "type": "arrow", "id": "a-traefik-api" }, { "type": "arrow", "id": "a-traefik-grafana" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-traefik"
+        },
+        {
+          "type": "arrow",
+          "id": "a-client-traefik"
+        },
+        {
+          "type": "arrow",
+          "id": "a-traefik-api"
+        },
+        {
+          "type": "arrow",
+          "id": "a-traefik-grafana"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -275,7 +306,6 @@
       "containerId": "r-traefik",
       "originalText": "Traefik\nIngress Controller\n:80 | :9000"
     },
-
     {
       "id": "bg-app-ns",
       "type": "rectangle",
@@ -292,7 +322,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 108,
       "version": 1,
       "versionNonce": 108,
@@ -335,7 +367,6 @@
       "containerId": null,
       "originalText": "ns: todo-app"
     },
-
     {
       "id": "r-api-deploy",
       "type": "rectangle",
@@ -352,12 +383,31 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 110,
       "version": 1,
       "versionNonce": 110,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-api-deploy" }, { "type": "arrow", "id": "a-traefik-api" }, { "type": "arrow", "id": "a-api-db" }, { "type": "arrow", "id": "a-api-otel" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-api-deploy"
+        },
+        {
+          "type": "arrow",
+          "id": "a-traefik-api"
+        },
+        {
+          "type": "arrow",
+          "id": "a-api-db"
+        },
+        {
+          "type": "arrow",
+          "id": "a-api-otel"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -387,15 +437,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "todo-api\nDeployment\ndev: 1 replica | prod: HPA 2\u20134",
+      "text": "todo-api\nDeployment\ndev: 1 replica | prod: HPA 2–4",
       "fontSize": 12,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "r-api-deploy",
-      "originalText": "todo-api\nDeployment\ndev: 1 replica | prod: HPA 2\u20134"
+      "originalText": "todo-api\nDeployment\ndev: 1 replica | prod: HPA 2–4"
     },
-
     {
       "id": "r-secret",
       "type": "rectangle",
@@ -412,12 +461,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 117,
       "version": 1,
       "versionNonce": 117,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-secret" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-secret"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -455,7 +511,6 @@
       "containerId": "r-secret",
       "originalText": "Secrets\n(SOPS / age)"
     },
-
     {
       "id": "r-db-sts",
       "type": "rectangle",
@@ -472,12 +527,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 113,
       "version": 1,
       "versionNonce": 113,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-db-sts" }, { "type": "arrow", "id": "a-api-db" }, { "type": "arrow", "id": "a-db-pvc" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-db-sts"
+        },
+        {
+          "type": "arrow",
+          "id": "a-api-db"
+        },
+        {
+          "type": "arrow",
+          "id": "a-db-pvc"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -507,15 +577,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "todo-db\nStatefulSet (PostgreSQL 18)",
+      "text": "todo-db\nCNPG Cluster (PostgreSQL 18)",
       "fontSize": 12,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "r-db-sts",
-      "originalText": "todo-db\nStatefulSet (PostgreSQL 18)"
+      "originalText": "todo-db\nCNPG Cluster (PostgreSQL 18)"
     },
-
     {
       "id": "r-pvc",
       "type": "rectangle",
@@ -532,12 +601,23 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 115,
       "version": 1,
       "versionNonce": 115,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-pvc" }, { "type": "arrow", "id": "a-db-pvc" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-pvc"
+        },
+        {
+          "type": "arrow",
+          "id": "a-db-pvc"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -567,15 +647,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "PVC (VCT)\n5Gi",
+      "text": "PVC 5Gi\n+ 1Gi WAL",
       "fontSize": 12,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "r-pvc",
-      "originalText": "PVC (VCT)\n5Gi"
+      "originalText": "PVC 5Gi\n+ 1Gi WAL"
     },
-
     {
       "id": "bg-argocd-ns",
       "type": "rectangle",
@@ -592,7 +671,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 1081,
       "version": 1,
       "versionNonce": 1081,
@@ -651,12 +732,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 1083,
       "version": 1,
       "versionNonce": 1083,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-argocd" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-argocd"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -727,7 +815,6 @@
       "containerId": null,
       "originalText": "argocd.1mindlabs.org"
     },
-
     {
       "id": "bg-mon-ns",
       "type": "rectangle",
@@ -744,7 +831,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 119,
       "version": 1,
       "versionNonce": 119,
@@ -787,7 +876,6 @@
       "containerId": null,
       "originalText": "ns: monitoring"
     },
-
     {
       "id": "r-otel",
       "type": "rectangle",
@@ -804,12 +892,31 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 121,
       "version": 1,
       "versionNonce": 121,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-otel" }, { "type": "arrow", "id": "a-api-otel" }, { "type": "arrow", "id": "a-otel-tempo" }, { "type": "arrow", "id": "a-otel-prom" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-otel"
+        },
+        {
+          "type": "arrow",
+          "id": "a-api-otel"
+        },
+        {
+          "type": "arrow",
+          "id": "a-otel-tempo"
+        },
+        {
+          "type": "arrow",
+          "id": "a-otel-prom"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -839,15 +946,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "OTel Collector\n(traces + metrics)",
+      "text": "Alloy\n(OTLP traces)",
       "fontSize": 12,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "r-otel",
-      "originalText": "OTel Collector\n(traces + metrics)"
+      "originalText": "Alloy\n(OTLP traces)"
     },
-
     {
       "id": "r-tempo",
       "type": "rectangle",
@@ -864,12 +970,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 123,
       "version": 1,
       "versionNonce": 123,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-tempo" }, { "type": "arrow", "id": "a-otel-tempo" }, { "type": "arrow", "id": "a-tempo-grafana" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-tempo"
+        },
+        {
+          "type": "arrow",
+          "id": "a-otel-tempo"
+        },
+        {
+          "type": "arrow",
+          "id": "a-tempo-grafana"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -907,7 +1028,6 @@
       "containerId": "r-tempo",
       "originalText": "Tempo\n(traces)"
     },
-
     {
       "id": "r-prometheus",
       "type": "rectangle",
@@ -924,12 +1044,31 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 125,
       "version": 1,
       "versionNonce": 125,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-prometheus" }, { "type": "arrow", "id": "a-otel-prom" }, { "type": "arrow", "id": "a-prom-grafana" }, { "type": "arrow", "id": "a-prom-alert" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-prometheus"
+        },
+        {
+          "type": "arrow",
+          "id": "a-otel-prom"
+        },
+        {
+          "type": "arrow",
+          "id": "a-prom-grafana"
+        },
+        {
+          "type": "arrow",
+          "id": "a-prom-alert"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -967,7 +1106,6 @@
       "containerId": "r-prometheus",
       "originalText": "Prometheus\n(metrics)"
     },
-
     {
       "id": "r-loki",
       "type": "rectangle",
@@ -984,12 +1122,27 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 127,
       "version": 1,
       "versionNonce": 127,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-loki" }, { "type": "arrow", "id": "a-promtail-loki" }, { "type": "arrow", "id": "a-loki-grafana" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-loki"
+        },
+        {
+          "type": "arrow",
+          "id": "a-promtail-loki"
+        },
+        {
+          "type": "arrow",
+          "id": "a-loki-grafana"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1027,7 +1180,6 @@
       "containerId": "r-loki",
       "originalText": "Loki\n(logs)"
     },
-
     {
       "id": "r-alertmanager",
       "type": "rectangle",
@@ -1044,12 +1196,23 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 131,
       "version": 1,
       "versionNonce": 131,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-alertmanager" }, { "type": "arrow", "id": "a-prom-alert" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-alertmanager"
+        },
+        {
+          "type": "arrow",
+          "id": "a-prom-alert"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1087,7 +1250,6 @@
       "containerId": "r-alertmanager",
       "originalText": "Alertmanager\n(alerts)"
     },
-
     {
       "id": "r-grafana",
       "type": "rectangle",
@@ -1104,12 +1266,35 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 129,
       "version": 1,
       "versionNonce": 129,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-grafana" }, { "type": "arrow", "id": "a-prom-grafana" }, { "type": "arrow", "id": "a-loki-grafana" }, { "type": "arrow", "id": "a-tempo-grafana" }, { "type": "arrow", "id": "a-traefik-grafana" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-grafana"
+        },
+        {
+          "type": "arrow",
+          "id": "a-prom-grafana"
+        },
+        {
+          "type": "arrow",
+          "id": "a-loki-grafana"
+        },
+        {
+          "type": "arrow",
+          "id": "a-tempo-grafana"
+        },
+        {
+          "type": "arrow",
+          "id": "a-traefik-grafana"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1147,7 +1332,6 @@
       "containerId": "r-grafana",
       "originalText": "Grafana\n(dashboards)"
     },
-
     {
       "id": "r-promtail",
       "type": "rectangle",
@@ -1164,12 +1348,23 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 133,
       "version": 1,
       "versionNonce": 133,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "t-promtail" }, { "type": "arrow", "id": "a-promtail-loki" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "t-promtail"
+        },
+        {
+          "type": "arrow",
+          "id": "a-promtail-loki"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1199,15 +1394,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "Promtail\nDaemonSet",
+      "text": "Alloy\n(pod logs)",
       "fontSize": 12,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "r-promtail",
-      "originalText": "Promtail\nDaemonSet"
+      "originalText": "Alloy\n(pod logs)"
     },
-
     {
       "id": "domain-traefik",
       "type": "text",
@@ -1266,13 +1460,13 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "api.1mindlabs.org",
+      "text": "todo.1mindlabs.org",
       "fontSize": 10,
       "fontFamily": 3,
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "api.1mindlabs.org"
+      "originalText": "todo.1mindlabs.org"
     },
     {
       "id": "domain-grafana",
@@ -1307,7 +1501,6 @@
       "containerId": null,
       "originalText": "grafana.1mindlabs.org"
     },
-
     {
       "id": "a-client-traefik",
       "type": "arrow",
@@ -1324,7 +1517,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 201,
       "version": 1,
       "versionNonce": 201,
@@ -1333,10 +1528,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [40, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          40,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-client", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-traefik", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-client",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-traefik",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1356,7 +1568,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 202,
       "version": 1,
       "versionNonce": 202,
@@ -1365,10 +1579,35 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [20, 0], [20, -105], [39, -105]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          20,
+          0
+        ],
+        [
+          20,
+          -105
+        ],
+        [
+          39,
+          -105
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-traefik", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-api-deploy", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-traefik",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-api-deploy",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1388,7 +1627,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 2021,
       "version": 1,
       "versionNonce": 2021,
@@ -1397,10 +1638,35 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [320, 0], [320, 45], [639, 45]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          320,
+          0
+        ],
+        [
+          320,
+          45
+        ],
+        [
+          639,
+          45
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-traefik", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-grafana", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-traefik",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-grafana",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1420,7 +1686,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 203,
       "version": 1,
       "versionNonce": 203,
@@ -1429,10 +1697,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 27]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          27
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-api-deploy", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-db-sts", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-api-deploy",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-db-sts",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1452,7 +1737,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 204,
       "version": 1,
       "versionNonce": 204,
@@ -1461,10 +1748,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [7, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          7,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-db-sts", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-pvc", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-db-sts",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-pvc",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1484,7 +1788,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 205,
       "version": 1,
       "versionNonce": 205,
@@ -1493,10 +1799,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [222, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          222,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-api-deploy", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-otel", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-api-deploy",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-otel",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1516,7 +1839,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 206,
       "version": 1,
       "versionNonce": 206,
@@ -1525,10 +1850,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 7]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          7
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-otel", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-tempo", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-otel",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-tempo",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1548,7 +1890,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 207,
       "version": 1,
       "versionNonce": 207,
@@ -1557,10 +1901,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 92]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          92
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-otel", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-prometheus", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-otel",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-prometheus",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1580,7 +1941,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 208,
       "version": 1,
       "versionNonce": 208,
@@ -1589,10 +1952,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [12, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          12,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-prometheus", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-grafana", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-prometheus",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-grafana",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1612,7 +1992,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 209,
       "version": 1,
       "versionNonce": 209,
@@ -1621,10 +2003,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 92]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          92
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-prometheus", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-alertmanager", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-prometheus",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-alertmanager",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1644,7 +2043,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 210,
       "version": 1,
       "versionNonce": 210,
@@ -1653,10 +2054,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [17, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          17,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-promtail", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-loki", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-promtail",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-loki",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1676,7 +2094,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 211,
       "version": 1,
       "versionNonce": 211,
@@ -1685,10 +2105,27 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, -100]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -100
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-loki", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-grafana", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-loki",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-grafana",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
@@ -1708,7 +2145,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 212,
       "version": 1,
       "versionNonce": 212,
@@ -1717,14 +2156,38 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [6, 0], [6, 70], [12, 70]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          70
+        ],
+        [
+          12,
+          70
+        ]
+      ],
       "lastCommittedPoint": null,
-      "startBinding": { "elementId": "r-tempo", "focus": 0, "gap": 4 },
-      "endBinding": { "elementId": "r-grafana", "focus": 0, "gap": 4 },
+      "startBinding": {
+        "elementId": "r-tempo",
+        "focus": 0,
+        "gap": 4
+      },
+      "endBinding": {
+        "elementId": "r-grafana",
+        "focus": 0,
+        "gap": 4
+      },
       "startArrowhead": null,
       "endArrowhead": "arrow"
     },
-
     {
       "id": "np-section-bg",
       "type": "rectangle",
@@ -1741,7 +2204,9 @@
       "roughness": 0,
       "opacity": 30,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 300,
       "version": 1,
       "versionNonce": 300,
@@ -1784,7 +2249,6 @@
       "containerId": null,
       "originalText": "Network Policies - Inter-namespace Traffic (Calico · default-deny-all per namespace)"
     },
-
     {
       "id": "np-external",
       "type": "rectangle",
@@ -1801,12 +2265,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 302,
       "version": 1,
       "versionNonce": 302,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-external" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-external"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1844,7 +2315,6 @@
       "containerId": "np-external",
       "originalText": "External\n(browser / curl)"
     },
-
     {
       "id": "np-bg-traefik",
       "type": "rectangle",
@@ -1861,7 +2331,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 310,
       "version": 1,
       "versionNonce": 310,
@@ -1920,12 +2392,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 312,
       "version": 1,
       "versionNonce": 312,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-traefik" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-traefik"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -1955,15 +2434,14 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "text": "traefik\n:80 in · :9000 in\negress → all backends",
+      "text": "traefik\n:8000 in · :9000 in\negress → all backends",
       "fontSize": 11,
       "fontFamily": 2,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "np-traefik",
-      "originalText": "traefik\n:80 in · :9000 in\negress → all backends"
+      "originalText": "traefik\n:8000 in · :9000 in\negress → all backends"
     },
-
     {
       "id": "np-bg-todoapp",
       "type": "rectangle",
@@ -1980,7 +2458,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 320,
       "version": 1,
       "versionNonce": 320,
@@ -2039,12 +2519,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 322,
       "version": 1,
       "versionNonce": 322,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-todoapp" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-todoapp"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -2082,7 +2569,6 @@
       "containerId": "np-todoapp",
       "originalText": "todo-api · pgbouncer · postgres\n:8000 in (traefik, prometheus)\n:5432 internal · :4317 out (alloy)"
     },
-
     {
       "id": "np-bg-monitoring",
       "type": "rectangle",
@@ -2099,7 +2585,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 330,
       "version": 1,
       "versionNonce": 330,
@@ -2158,12 +2646,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 332,
       "version": 1,
       "versionNonce": 332,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-monitoring" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-monitoring"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -2201,7 +2696,6 @@
       "containerId": "np-monitoring",
       "originalText": "alloy · prometheus · grafana\nloki · tempo · alertmanager\n:4317/:8000/:9090/:3000 in"
     },
-
     {
       "id": "np-bg-argocd",
       "type": "rectangle",
@@ -2218,7 +2712,9 @@
       "roughness": 0,
       "opacity": 50,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 340,
       "version": 1,
       "versionNonce": 340,
@@ -2277,12 +2773,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 342,
       "version": 1,
       "versionNonce": 342,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-argocd" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-argocd"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -2320,7 +2823,6 @@
       "containerId": "np-argocd",
       "originalText": "argocd-server\n:80 in (traefik)\n:443 out (k8s api + github)"
     },
-
     {
       "id": "np-dns",
       "type": "rectangle",
@@ -2337,12 +2839,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 350,
       "version": 1,
       "versionNonce": 350,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-dns" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-dns"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -2380,7 +2889,6 @@
       "containerId": "np-dns",
       "originalText": "kube-system (CoreDNS)\nall pods egress :53 UDP+TCP"
     },
-
     {
       "id": "np-internet",
       "type": "rectangle",
@@ -2397,12 +2905,19 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 3 },
+      "roundness": {
+        "type": 3
+      },
       "seed": 360,
       "version": 1,
       "versionNonce": 360,
       "isDeleted": false,
-      "boundElements": [{ "type": "text", "id": "np-t-internet" }],
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "np-t-internet"
+        }
+      ],
       "updated": 1741296000000,
       "link": null,
       "locked": false
@@ -2440,7 +2955,6 @@
       "containerId": "np-internet",
       "originalText": "internet :443\nalertmanager (Slack) · argocd (GitHub)"
     },
-
     {
       "id": "np-a-ext-traefik",
       "type": "arrow",
@@ -2457,7 +2971,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 400,
       "version": 1,
       "versionNonce": 400,
@@ -2466,7 +2982,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [28, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          28,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2480,7 +3005,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-traefik-todoapp",
       "type": "arrow",
@@ -2497,7 +3021,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 401,
       "version": 1,
       "versionNonce": 401,
@@ -2506,7 +3032,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [37, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          37,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2520,7 +3055,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-traefik-monitoring",
       "type": "arrow",
@@ -2537,7 +3071,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 402,
       "version": 1,
       "versionNonce": 402,
@@ -2546,7 +3082,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [304, -14]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          304,
+          -14
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2560,7 +3105,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-traefik-argocd",
       "type": "arrow",
@@ -2577,7 +3121,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 403,
       "version": 1,
       "versionNonce": 403,
@@ -2586,7 +3132,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [577, 10]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          577,
+          10
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2600,7 +3155,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-todoapp-alloy",
       "type": "arrow",
@@ -2617,7 +3171,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 404,
       "version": 1,
       "versionNonce": 404,
@@ -2626,7 +3182,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [43, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          43,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2640,7 +3205,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-prometheus-scrape",
       "type": "arrow",
@@ -2657,7 +3221,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 405,
       "version": 1,
       "versionNonce": 405,
@@ -2666,7 +3232,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [-43, 0]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -43,
+          0
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2680,7 +3255,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-monitoring-internet",
       "type": "arrow",
@@ -2697,7 +3271,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 406,
       "version": 1,
       "versionNonce": 406,
@@ -2706,7 +3282,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 92]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          92
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2720,7 +3305,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-argocd-internet",
       "type": "arrow",
@@ -2737,7 +3321,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 407,
       "version": 1,
       "versionNonce": 407,
@@ -2746,7 +3332,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [-47, 92]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -47,
+          92
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,
@@ -2760,7 +3355,6 @@
         "verticalAlign": "middle"
       }
     },
-
     {
       "id": "np-a-all-dns",
       "type": "arrow",
@@ -2777,7 +3371,9 @@
       "roughness": 0,
       "opacity": 100,
       "groupIds": [],
-      "roundness": { "type": 2 },
+      "roundness": {
+        "type": 2
+      },
       "seed": 408,
       "version": 1,
       "versionNonce": 408,
@@ -2786,7 +3382,16 @@
       "updated": 1741296000000,
       "link": null,
       "locked": false,
-      "points": [[0, 0], [0, 67]],
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          67
+        ]
+      ],
       "lastCommittedPoint": null,
       "startBinding": null,
       "endBinding": null,

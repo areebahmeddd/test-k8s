@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import uuid
-from enum import StrEnum
 from datetime import datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
@@ -30,14 +30,12 @@ class Todo(Base, TimestampMixin):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String(255))
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text)
     completed: Mapped[bool] = mapped_column(default=False)
-    priority: Mapped[Priority] = mapped_column(
-        SAEnum(Priority), default=Priority.medium
-    )
-    due_date: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    priority: Mapped[Priority] = mapped_column(SAEnum(Priority), default=Priority.medium)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     owner: Mapped[User] = relationship(back_populates="todos")

@@ -1,36 +1,42 @@
 [project]
 name = "todo-app"
-version = "1.0.0"
+version = "1.1.0"
 description = "Todo API"
-requires-python = ">=3.11"
+requires-python = "==3.14.*"
 dependencies = [
-    "fastapi[standard]",
-    "sqlalchemy",
-    "aiosqlite",
-    "asyncpg",
-    "alembic",
-    "pydantic",
-    "pydantic-settings",
-    "PyJWT",
-    "bcrypt",
-    "email-validator",
-    "prometheus-fastapi-instrumentator",
-    "opentelemetry-sdk",
-    "opentelemetry-instrumentation-fastapi",
-    "opentelemetry-instrumentation-sqlalchemy",
-    "opentelemetry-exporter-otlp-proto-grpc",
-    "python-json-logger",
+    "fastapi[standard]>=0.162.0",
+    "sqlalchemy[asyncio]>=2.0.55",
+    "aiosqlite>=0.22.1",
+    "asyncpg>=0.32.0",
+    "alembic>=1.20.1",
+    "pydantic[email]>=2.14.1",
+    "pydantic-settings>=2.16.1",
+    "pyjwt>=2.15.1",
+    "bcrypt>=5.0.0",
+    "prometheus-fastapi-instrumentator>=8.1.0",
+    "opentelemetry-sdk>=1.45.1",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.45.1",
+    "opentelemetry-instrumentation-fastapi>=0.66b1",
+    "opentelemetry-instrumentation-logging>=0.66b1",
+    "opentelemetry-instrumentation-sqlalchemy>=0.66b1",
+    "python-json-logger>=4.2.0",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest",
-    "pytest-asyncio",
-    "httpx",
-    "ruff",
-    "pre-commit",
-    "pytest-cov",
+    "httpx>=0.28.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.2",
 ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "ASYNC", "RUF"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -40,6 +46,4 @@ pythonpath = ["."]
 [tool.coverage.run]
 source = ["app"]
 branch = true
-
-[tool.coverage.report]
-show_missing = true
+patch = ["subprocess"]

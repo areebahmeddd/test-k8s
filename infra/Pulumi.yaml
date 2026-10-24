@@ -1,7 +1,7 @@
 name: todo-k8s-infra
+description: Bootstrap layer for todo-k8s (ArgoCD, namespaces, Kubernetes Secrets).
+main: src
 runtime:
   name: python
   options:
-    virtualenv: venv
-description: Bootstrap layer for todo-k8s (CNPG Helm Release, ArgoCD, K8s Secrets).
-main: src
+    toolchain: uv

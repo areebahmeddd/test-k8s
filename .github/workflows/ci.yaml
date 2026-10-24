@@ -3,57 +3,59 @@ name: Code Quality and Testing
 on:
   push:
     branches: [dev, prod]
-    paths:
-      - "app/**"
-      - "tests/**"
-      - "alembic/**"
-      - "alembic.ini"
-      - "pyproject.toml"
-      - "uv.lock"
+    paths-ignore: ["**.md", "docs/**", "k8s/**", "policy/**"]
   pull_request:
     branches: [dev, prod]
-    paths:
-      - "app/**"
-      - "tests/**"
-      - "alembic/**"
-      - "alembic.ini"
-      - "pyproject.toml"
-      - "uv.lock"
+    paths-ignore: ["**.md", "docs/**", "k8s/**", "policy/**"]
   workflow_dispatch:
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
-env:
-  PYTHON_VERSION: "3.11"
-  UV_VERSION: "0.11.0"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-and-test:
+    name: Lint and test
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
+          version: "0.13.5"
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --locked
 
-      - name: Run lint
-        run: uv run ruff check app/
+      - name: Lint with Ruff
+        run: uv run ruff check .
 
-      - name: Run format check
-        run: uv run ruff format --check app/
+      - name: Check formatting with Ruff
+        run: uv run ruff format --check .
 
-      - name: Run tests
+      - name: Check that migrations match the models
+        env:
+          SECRET_KEY: ci-only-secret-key-not-used-for-anything-real
+          DATABASE_URL: sqlite+aiosqlite:///./ci.db
+        run: uv run alembic upgrade head && uv run alembic check
+
+      - name: Run tests with coverage
         run: uv run pytest -v --cov=app --cov-report=term-missing
+
+  docker-build:
+    name: Build the Docker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the image
+        run: docker build -t todo-api:ci .

@@ -1,22 +1,20 @@
-default_stages: [pre-commit]
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
+        exclude: ^k8s/overlays/.*/secrets/
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        exclude: ^k8s/overlays/.*/secrets/
       - id: check-json
       - id: check-yaml
-        exclude: ^k8s/
-      - id: check-yaml
-        name: check-yaml (multi-document k8s manifests)
         args: [--allow-multiple-documents]
-        files: ^k8s/
+      - id: check-added-large-files
+      - id: detect-private-key
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.17.2
     hooks:
       - id: ruff-check
         args: [--fix]

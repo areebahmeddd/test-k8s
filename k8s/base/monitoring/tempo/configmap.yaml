@@ -9,7 +9,11 @@ metadata:
     app.kubernetes.io/part-of: todo-k8s
     app.kubernetes.io/managed-by: kustomize
 data:
+  # Tempo 3 single-binary mode: the distributor writes straight to the live-store
+  # (no Kafka), which flushes blocks to local storage.
   tempo.yaml: |
+    stream_over_http_enabled: true
+
     server:
       http_listen_port: 3200
       log_level: warn
@@ -21,13 +25,13 @@ data:
             http:
               endpoint: 0.0.0.0:4318
 
-    ingester:
-      max_block_duration: 5m
-
     storage:
       trace:
-        backend: local # TODO: replace with S3-compatible object store.
+        backend: local
         local:
-          path: /var/tempo/traces
+          path: /var/tempo/blocks
         wal:
           path: /var/tempo/wal
+
+    usage_report:
+      reporting_enabled: false

@@ -1,10 +1,3 @@
-# Network policies for the traefik namespace.
-# Default-deny-all baseline; each workload gets an explicit allow policy.
-# Namespace selectors use kubernetes.io/metadata.name (auto-label, k8s 1.21+).
-
----
-# deny all ingress and egress
-# overridden per workload below
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -19,13 +12,12 @@ spec:
     - Egress
 
 ---
-# allow-traefik
-# ingress: external http (80), dashboard (9000)
-# egress:  dns (53), k8s api (443), todo-api (8000), argocd-server (80)
-#          grafana (3000), prometheus (9090), alloy ui (12345) -- prod ingress backends
+# ingress: external http (8000), dashboard (9000)
+# egress:  dns (53), k8s api (443), todo-api (8000), argocd-server (8080)
+#          grafana (3000), prometheus (9090), alloy ui (12345)
 #
-# no from: selector on ingress port 80 -- hostport traffic arrives without
-# a source namespace label (kind / minikube tunnel).
+# no from: selector on the ingress ports -- LoadBalancer traffic arrives from
+# outside the cluster with no namespace label.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -41,10 +33,10 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # external http (no from: -- hostport traffic has no namespace label)
+    # external http
     - ports:
         - protocol: TCP
-          port: 80
+          port: 8000
     # dashboard
     - ports:
         - protocol: TCP
@@ -92,7 +84,7 @@ spec:
               app.kubernetes.io/name: argocd-server
       ports:
         - protocol: TCP
-          port: 80
+          port: 8080
     # grafana
     - to:
         - namespaceSelector:

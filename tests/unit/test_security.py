@@ -11,58 +11,63 @@ from app.core.security import (
     decode_access_token,
     generate_refresh_token,
     hash_password,
+    hash_refresh_token,
     verify_password,
 )
 
 
-def test_hash_password_produces_valid_hash():
-    """Assert that hash_password returns a non-empty string distinct from the input."""
+def test_password_hash_verifies_only_the_original_password():
+    """Assert that a bcrypt hash matches its own password and nothing else."""
     hashed = hash_password("mysecret")
     assert hashed != "mysecret"
-    assert len(hashed) > 0
+    assert verify_password("mysecret", hashed)
+    assert not verify_password("wrongpassword", hashed)
 
 
-def test_verify_password_correct():
-    """Assert that verify_password returns True when the plain-text matches the stored hash."""
-    hashed = hash_password("mysecret")
-    assert verify_password("mysecret", hashed) is True
+@pytest.mark.parametrize("hashed", [None, hash_password("x" * 72)], ids=["no-hash", "too-long"])
+def test_verify_password_fails_safely(hashed: str | None):
+    """Assert that a missing hash or over-long input is a mismatch rather than an error."""
+    assert not verify_password("x" * 100, hashed)
 
 
-def test_verify_password_wrong():
-    """Assert that verify_password returns False for a mismatched plain-text/hash pair."""
-    hashed = hash_password("mysecret")
-    assert verify_password("wrongpassword", hashed) is False
-
-
-def test_create_and_decode_access_token():
-    """Assert that a freshly created access token round-trips correctly through decode."""
+def test_access_token_round_trips():
+    """Assert that a created access token decodes to the same subject and type."""
     user_id = uuid.uuid4()
-    token = create_access_token(user_id)
-    payload = decode_access_token(token)
-
+    payload = decode_access_token(create_access_token(user_id))
     assert payload["sub"] == str(user_id)
     assert payload["type"] == "access"
-    assert "exp" in payload
+    assert payload["exp"] > datetime.now(UTC).timestamp()
 
 
-def test_expired_token_raises():
-    """Assert that decoding a token with a past expiry raises InvalidTokenError."""
-    expired_payload = {
-        "sub": str(uuid.uuid4()),
-        "exp": datetime.now(UTC) - timedelta(seconds=1),
-        "type": "access",
-    }
+@pytest.mark.parametrize(
+    ("key", "expires_in"),
+    [
+        (None, timedelta(seconds=-1)),
+        ("another-key-that-is-at-least-32-bytes", timedelta(minutes=5)),
+    ],
+    ids=["expired", "wrong-signing-key"],
+)
+def test_decode_rejects_untrusted_tokens(key: str | None, expires_in: timedelta):
+    """Assert that expired tokens and tokens signed with another key are rejected."""
     token = jwt.encode(
-        expired_payload, settings.secret_key, algorithm=settings.algorithm
+        {"sub": str(uuid.uuid4()), "type": "access", "exp": datetime.now(UTC) + expires_in},
+        key or settings.secret_key.get_secret_value(),
+        algorithm=settings.algorithm,
     )
-
     with pytest.raises(InvalidTokenError):
         decode_access_token(token)
 
 
-def test_generate_refresh_token_is_unique():
-    """Assert that successive calls to generate_refresh_token produce distinct UUID4 strings."""
-    t1 = generate_refresh_token()
-    t2 = generate_refresh_token()
-    assert isinstance(t1, str)
-    assert t1 != t2
+def test_refresh_tokens_are_unique_and_high_entropy():
+    """Assert that refresh tokens never repeat and carry 256 bits (43 URL-safe chars)."""
+    first, second = generate_refresh_token(), generate_refresh_token()
+    assert first != second
+    assert len(first) >= 43
+
+
+def test_refresh_token_hash_is_stable_sha256():
+    """Assert that hashing is deterministic, input-sensitive and yields 64 hex chars."""
+    digest = hash_refresh_token("token")
+    assert digest == hash_refresh_token("token")
+    assert digest != hash_refresh_token("other")
+    assert len(digest) == 64

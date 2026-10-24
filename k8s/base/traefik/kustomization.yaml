@@ -10,4 +10,4 @@ resources:
   - ingressclass.yaml
   - deployment.yaml
   - service.yaml
-  # dashboard-ingress/ kustomization is only used by the prod overlay (requires a host to avoid routing conflicts).
+  - dashboard-ingress.yaml

@@ -1,244 +1,132 @@
-﻿SHELL := /bin/bash
-
-.PHONY: up down quality test coverage migrate upgrade downgrade \
-        minikube-create minikube-delete minikube-load minikube-tunnel docker-pull \
-        k8s-deploy k8s-delete k8s-status k8s-logs k8s-pf \
-        pulumi-init pulumi-up pulumi-destroy \
-        check-sops sops-encrypt sops-decrypt \
-        db-reset cnpg-status \
-        validate validate-k8s validate-schema validate-sops validate-policies
-
-# AGE private key used by SOPS — expected at the project root as age.key.
-export SOPS_AGE_KEY_FILE := $(CURDIR)/age.key
+SHELL := /bin/bash
 
 OVERLAY ?= dev
+IMAGE   := areebahmeddd/todo-api:1.1.0
+SECRETS := $(wildcard k8s/overlays/$(OVERLAY)/secrets/*.yaml)
+SCHEMAS := -schema-location default \
+           -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
 
-# ============================================
-# Development
-# ============================================
+# SOPS reads the age private key from the project root.
+export SOPS_AGE_KEY_FILE := $(CURDIR)/age.key
 
-up:
-	docker compose up -d
+.PHONY: help up down lint test quality migration migrate downgrade \
+        cluster-up cluster-down image image-push cnpg-operator \
+        k8s-deploy k8s-secrets k8s-delete k8s-status check-sops sops-encrypt \
+        pulumi-install pulumi-up pulumi-destroy \
+        validate validate-k8s validate-schema validate-sops validate-policies
 
-down:
-	docker compose down
+help: ## List targets
+	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
 
-# ============================================
-# Code Quality
-# ============================================
+# Local development
 
-quality:
-	uv run pre-commit run --all-files
+up: ## Start the API + PostgreSQL with docker compose
+	docker compose up -d --build
 
-# ============================================
-# Code Testing
-# ============================================
+down: ## Stop docker compose and drop its volume
+	docker compose down -v
 
-test:
+lint: ## Lint and format with ruff
+	uv run ruff check . --fix
+	uv run ruff format .
+
+test: ## Run the test suite with coverage
 	uv run pytest -v --cov=app --cov-report=term-missing
 
-coverage:
-	uv run pytest -v --cov=app --cov-report=term-missing --cov-report=html
+quality: ## Run all pre-commit hooks against every file
+	uv run pre-commit run --all-files
 
-# ============================================
-# Database Migrations
-# ============================================
-
-migrate:
+migration: ## Generate a migration: make migration msg="add column"
 	uv run alembic revision --autogenerate -m "$(msg)"
 
-upgrade:
+migrate: ## Apply all migrations
 	uv run alembic upgrade head
 
-downgrade:
+downgrade: ## Roll back the last migration
 	uv run alembic downgrade -1
 
-# ============================================
-# Minikube (local cluster)
-# ============================================
+# Local cluster
 
-minikube-create:
-	minikube start --cni=calico --memory=4096 --cpus=4
-	kubectl wait --for=condition=ready pod -l k8s-app=calico-node -n kube-system --timeout=120s
-	kubectl label node minikube ingress-ready=true
+cluster-up: ## Create the minikube cluster
+	minikube start --cni=calico --memory=8192 --cpus=4
+	kubectl rollout status daemonset/calico-node -n kube-system --timeout=300s
 
-minikube-delete:
+cluster-down: ## Delete the minikube cluster
 	minikube delete
 
-docker-pull:
-	docker pull areebahmeddd/todo-api:1.0.0
-	docker pull traefik:v3.6.13
-	docker pull ghcr.io/cloudnative-pg/postgresql:18
-	docker pull ghcr.io/cloudnative-pg/cloudnative-pg:1.29.0
-	docker pull grafana/grafana:12.4.2
-	docker pull grafana/loki:3.7.1
-	docker pull grafana/tempo:2.10.3
-	docker pull grafana/alloy:v1.15.0
-	docker pull prom/prometheus:v3.11.1
-	docker pull prom/alertmanager:v0.32.0
+image: ## Build the API image inside minikube
+	minikube image build -t $(IMAGE) -f Dockerfile .
 
-minikube-load: docker-pull
-	minikube image load areebahmeddd/todo-api:1.0.0
-	minikube image load traefik:v3.6.13
-	minikube image load ghcr.io/cloudnative-pg/cloudnative-pg:1.29.0
-	minikube image load ghcr.io/cloudnative-pg/postgresql:18
-	minikube image load grafana/grafana:12.4.2
-	minikube image load grafana/loki:3.7.1
-	minikube image load grafana/tempo:2.10.3
-	minikube image load grafana/alloy:v1.15.0
-	minikube image load prom/prometheus:v3.11.1
-	minikube image load prom/alertmanager:v0.32.0
+image-push: ## Build and publish the API image to Docker Hub (needed by the GitOps path)
+	docker build -t $(IMAGE) .
+	docker push $(IMAGE)
 
-# ============================================
-# Kubernetes (Kustomize)
-# ============================================
+cnpg-operator: ## Install the CloudNativePG operator unless already present (used by Tilt)
+	kubectl get crd clusters.postgresql.cnpg.io > /dev/null 2>&1 || \
+		helm upgrade --install cloudnative-pg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg \
+			--version 0.29.1 --namespace cnpg-system --create-namespace --set replicaCount=1 --wait
 
-k8s-deploy: check-sops
-	# Step 1: Apply ArgoCD (two passes — first installs CRDs, second applies Applications)
-	kubectl apply -k k8s/argocd/ --server-side || kubectl apply -k k8s/argocd/ --server-side
-	# Step 2: Sync CNPG operator and wait — Cluster/Pooler CRDs must exist before step 3
-	argocd app sync cloudnativepg --server localhost:8080 --insecure || true
-	kubectl rollout status deployment/cloudnative-pg -n cnpg-system --timeout=120s
-	# Step 3: Apply the overlay manifests (namespaces, deployments, configmaps, ingress)
-	kustomize build k8s/overlays/$(OVERLAY)/ | kubectl apply -f -
-	# Step 4: Decrypt and apply SOPS-encrypted secrets
-	@for f in k8s/overlays/$(OVERLAY)/secrets/*.yaml; do \
-		echo "Applying secret: $$f"; \
-		sops -d $$f | kubectl apply -f -; \
-	 done
-	# Step 5: Label the node for ingress scheduling (minikube only — idempotent on real clusters)
-	kubectl label node minikube ingress-ready=true --overwrite 2>/dev/null || true
+# GitOps deploy
 
-k8s-delete:
-	kubectl delete -k k8s/argocd/ --ignore-not-found
-	kustomize build k8s/overlays/$(OVERLAY)/ | kubectl delete -f - --ignore-not-found
+k8s-deploy: check-sops ## Bootstrap ArgoCD + Applications, then apply secrets
+	# The first apply creates the ArgoCD CRDs; Applications need them registered.
+	kubectl apply --server-side -k k8s/argocd/$(OVERLAY) || { \
+		kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=120s && \
+		kubectl apply --server-side -k k8s/argocd/$(OVERLAY); }
+	$(MAKE) k8s-secrets
 
-k8s-status:
-	kubectl get all -n argocd
-	kubectl get all -n todo-app
-	kubectl get all -n monitoring
-	kubectl get all -n traefik
+k8s-secrets: check-sops ## Decrypt and apply the overlay secrets (plaintext never hits disk)
+	kubectl apply -f k8s/base/app/namespace.yaml -f k8s/base/monitoring/namespace.yaml
+	@for f in $(SECRETS); do echo "Applying $$f"; sops -d $$f | kubectl apply -f -; done
 
-k8s-pf:
-	kubectl port-forward -n todo-app svc/todo-api 8000:8000 &
-	kubectl port-forward -n traefik svc/traefik 9000:9000 &
-	kubectl port-forward -n argocd svc/argocd-server 8080:80 &
-	kubectl port-forward -n monitoring svc/grafana 3000:3000 &
-	kubectl port-forward -n monitoring svc/prometheus 9090:9090 &
-	kubectl port-forward -n monitoring svc/alloy 12345:12345 &
+k8s-delete: ## Remove the Applications (ArgoCD prunes their resources), then ArgoCD
+	kubectl delete -n argocd applications.argoproj.io --all --ignore-not-found --wait
+	kubectl delete -k k8s/argocd/$(OVERLAY) --ignore-not-found
 
-# ============================================
+k8s-status: ## Show workloads, plus ArgoCD Applications and the database cluster when installed
+	kubectl get pods -A -l 'app.kubernetes.io/part-of=todo-k8s'
+	-kubectl get applications.argoproj.io -n argocd
+	-kubectl get clusters.postgresql.cnpg.io -n todo-app
+
+check-sops: ## Fail fast unless age.key exists and decrypts the overlay secrets
+	@test -f age.key || { echo "age.key not found. Get the team key, or create one (age-keygen -o age.key), re-encrypt with 'make sops-encrypt' and update .sops.yaml."; exit 1; }
+	@sops -d $(firstword $(SECRETS)) > /dev/null || { echo "age.key cannot decrypt k8s/overlays/$(OVERLAY)/secrets/."; exit 1; }
+
+sops-encrypt: ## Encrypt any plaintext secret files in both overlays
+	@for f in k8s/overlays/*/secrets/*.yaml; do \
+		grep -q '^sops:' $$f && continue; echo "Encrypting $$f"; sops encrypt --in-place $$f; \
+	done
+
 # Pulumi
-# ============================================
-# pulumi-init:    one-time setup; creates infra/venv and installs requirements.txt.
-# pulumi-up:      idempotent bootstrap; installs CNPG (Helm), ArgoCD (kustomize),
-#                 namespaces, and K8s Secrets. Set secrets first:
-#                   cd infra && pulumi config set --secret todo-k8s-infra:<key> <val>
-# pulumi-destroy: tear down all Pulumi-managed resources (not the cluster itself).
 
-pulumi-init:
-	python3 -m venv infra/venv
-	infra/venv/bin/pip install --quiet --upgrade pip
-	infra/venv/bin/pip install --quiet -r infra/requirements.txt
+pulumi-install: ## Install the Pulumi program's dependencies (uv)
+	cd infra && pulumi install
 
-pulumi-up:
-	cd infra && pulumi up --stack $(OVERLAY) --yes
+pulumi-up: ## Bootstrap ArgoCD + secrets for stack $(OVERLAY)
+	cd infra && pulumi up --stack $(OVERLAY)
 
-pulumi-destroy:
-	cd infra && pulumi destroy --stack $(OVERLAY) --yes
+pulumi-destroy: ## Remove everything the Pulumi stack created
+	# Delete the Applications first, while ArgoCD is still running to process their finalizers.
+	kubectl delete -n argocd applications.argoproj.io --all --ignore-not-found --wait
+	cd infra && pulumi destroy --stack $(OVERLAY)
 
-# ============================================
-# SOPS Secret Management
-# ============================================
-
-# Guard: verify age.key exists and can decrypt the overlay secrets before touching the cluster.
-# Three outcomes:
-#   1. age.key missing           → hard stop  (get from team OR generate fresh)
-#   2. age.key is the wrong key  → hard stop  (get team key OR edit plaintext + make sops-encrypt)
-#   3. secrets are plaintext     → soft warn  (run make sops-encrypt before committing)
-check-sops:
-	@if [ ! -f "$(CURDIR)/age.key" ]; then \
-		printf "\nERROR: age.key not found at $(CURDIR)/age.key\n\n"; \
-		printf "  Team setup  — get from your team's secure channel (1Password / Vault / etc.)\n"; \
-		printf "  Fresh setup — generate one: age-keygen -o age.key\n"; \
-		printf "                then edit k8s/overlays/$(OVERLAY)/secrets/ with plaintext values\n"; \
-		printf "                and run: make sops-encrypt\n\n"; \
-		exit 1; \
-	fi
-	@probe=$$(ls k8s/overlays/$(OVERLAY)/secrets/*.yaml 2>/dev/null | head -1); \
-	if [ -z "$$probe" ]; then exit 0; fi; \
-	if grep -q 'ENC\[' "$$probe" 2>/dev/null; then \
-		if ! sops -d "$$probe" > /dev/null 2>&1; then \
-			printf "\nERROR: age.key cannot decrypt secrets in k8s/overlays/$(OVERLAY)/secrets/\n\n"; \
-			printf "  Your key is different from the one used to encrypt these files.\n\n"; \
-			printf "  Team setup  — replace age.key with the key from your team's secure channel\n"; \
-			printf "  Fresh setup — replace each file in k8s/overlays/$(OVERLAY)/secrets/ with\n"; \
-			printf "                plaintext values, then re-encrypt: make sops-encrypt\n\n"; \
-			exit 1; \
-		fi; \
-	else \
-		printf "WARNING: secrets in k8s/overlays/$(OVERLAY)/secrets/ are NOT encrypted.\n"; \
-		printf "         Run 'make sops-encrypt' before committing.\n"; \
-	fi
-
-sops-encrypt:
-	@for f in k8s/overlays/dev/secrets/*.yaml k8s/overlays/prod/secrets/*.yaml; do \
-		echo "Encrypting: $$f"; \
-		sops --encrypt --in-place --indent 2 $$f; \
-	 done
-
-sops-decrypt:
-	@for f in k8s/overlays/dev/secrets/*.yaml k8s/overlays/prod/secrets/*.yaml; do \
-		echo "Decrypting: $$f"; \
-		sops --decrypt --in-place $$f; \
-	 done
-
-# ============================================
-# CloudNativePG
-# ============================================
-
-db-reset:
-	kubectl delete cluster todo-db -n todo-app --ignore-not-found
-	kubectl delete pvc -l cnpg.io/cluster=todo-db -n todo-app --ignore-not-found
-	@echo "Waiting for cluster finalizers to clear..."
-	sleep 5
-	@for f in k8s/overlays/$(OVERLAY)/secrets/todo-db-secret.yaml; do \
-		echo "Applying secret: $$f"; \
-		sops -d $$f | kubectl apply -f -; \
-	 done
-	kustomize build k8s/overlays/$(OVERLAY)/ | kubectl apply -f -
-
-cnpg-status:
-	kubectl get cluster todo-db -n todo-app -o wide
-	kubectl get pods -n todo-app -l cnpg.io/cluster=todo-db
-	kubectl get pvc -n todo-app -l cnpg.io/cluster=todo-db
-
-# ============================================
 # Validation
-# ============================================
 
-validate: validate-k8s validate-schema validate-sops validate-policies
+validate: validate-k8s validate-schema validate-sops validate-policies ## Run all checks
 
-validate-k8s:
-	kustomize build k8s/overlays/dev > /dev/null
-	kustomize build k8s/overlays/prod > /dev/null
+validate-k8s: ## Render every kustomization
+	@for d in k8s/overlays/dev k8s/overlays/prod k8s/argocd/dev k8s/argocd/prod; do \
+		echo "Building $$d"; kustomize build $$d > /dev/null || exit 1; done
 
-validate-schema:
-	kustomize build k8s/overlays/dev | \
-	  kubeconform -strict -ignore-missing-schemas -summary -skip Secret \
-	    -schema-location default \
-	    -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-	    -
+validate-schema: ## Validate rendered overlays against Kubernetes and CRD schemas
+	@for o in dev prod; do kustomize build k8s/overlays/$$o | \
+		kubeconform -strict -summary -skip Secret $(SCHEMAS) - || exit 1; done
 
-validate-sops:
-	@for f in k8s/overlays/dev/secrets/*.yaml k8s/overlays/prod/secrets/*.yaml; do \
-		echo "Checking: $$f"; \
-		if ! grep -q 'sops:' "$$f" || ! grep -q 'ENC\[' "$$f"; then \
-			echo "ERROR: $$f is not SOPS-encrypted."; \
-			exit 1; \
-		fi; \
-	 done; \
-	 echo "All secrets are SOPS-encrypted."
+validate-sops: ## Ensure every committed secret is SOPS-encrypted
+	@for f in k8s/overlays/*/secrets/*.yaml; do \
+		grep -q '^sops:' $$f && grep -q 'ENC\[' $$f || { echo "$$f is not encrypted"; exit 1; }; \
+	done; echo "All secrets are SOPS-encrypted."
 
-validate-policies:
-	kustomize build k8s/overlays/dev | conftest test --no-color --config-file .conftest.yaml --all-namespaces -
+validate-policies: ## Unit-test the OPA policies, then run them against both overlays
+	@conftest verify && for o in dev prod; do kustomize build k8s/overlays/$$o | \
+		conftest test --all-namespaces --fail-on-warn - || exit 1; done

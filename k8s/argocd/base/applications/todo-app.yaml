@@ -1,0 +1,40 @@
+# targetRevision and path are set per environment in k8s/argocd/<env>/.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: todo-app
+  labels:
+    app.kubernetes.io/name: todo-app
+    app.kubernetes.io/instance: todo-app
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: todo-k8s
+    app.kubernetes.io/managed-by: kustomize
+  # Deleting the Application also deletes the resources it manages.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/areebahmeddd/test-k8s
+    targetRevision: dev
+    path: k8s/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: todo-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      # The CNPG Cluster/Pooler CRDs arrive with the cloudnativepg Application;
+      # skip their dry-run and let the retry below apply them once registered.
+      - SkipDryRunOnMissingResource=true
+      - PruneLast=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+
+patches:
+  - target:
+      kind: Application
+      name: todo-app
+    patch: |-
+      - op: replace
+        path: /spec/source/targetRevision
+        value: dev
+      - op: replace
+        path: /spec/source/path
+        value: k8s/overlays/dev
+
+  - target:
+      kind: Ingress
+      name: argocd-server
+    patch: |-
+      - op: add
+        path: /spec/rules/0/host
+        value: argocd.localhost
