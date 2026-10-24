@@ -71,9 +71,12 @@ Applications), then the SOPS secrets. From then on ArgoCD syncs from GitHub:
 
 - `cloudnativepg` installs the CNPG Helm chart into `cnpg-system`.
 - `todo-app` deploys `k8s/overlays/<overlay>` from the branch with the same name, with automated sync, pruning
-  and self-healing. It keeps retrying until the CNPG CRDs from the first Application are registered.
+  and self-healing. It keeps retrying until the CNPG CRDs and the operator's webhook from the first
+  Application are ready; on a fresh cluster that can take several minutes while images download.
 
-Changes reach the cluster only after they are pushed to that branch. To get ArgoCD's initial admin password:
+On minikube, `todo-app` stays `Progressing` rather than `Healthy` until `minikube tunnel` runs: ArgoCD waits for
+the Traefik LoadBalancer and the Ingresses to get an address. Changes reach the cluster only after they are
+pushed to that branch. To get ArgoCD's initial admin password:
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d

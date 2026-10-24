@@ -62,9 +62,11 @@ image-push: ## Build and publish the API image to Docker Hub (needed by the GitO
 	docker push $(IMAGE)
 
 cnpg-operator: ## Install the CloudNativePG operator unless already present (used by Tilt)
-	kubectl get crd clusters.postgresql.cnpg.io > /dev/null 2>&1 || \
+	kubectl get deploy -n cnpg-system -l app.kubernetes.io/name=cloudnative-pg -o name 2>/dev/null | grep -q . || \
 		helm upgrade --install cloudnative-pg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg \
-			--version 0.29.1 --namespace cnpg-system --create-namespace --set replicaCount=1 --wait
+			--version 0.29.1 --namespace cnpg-system --create-namespace --set replicaCount=1 \
+			--set crds.create=$$(kubectl get crd clusters.postgresql.cnpg.io > /dev/null 2>&1 && echo false || echo true) \
+			--wait
 
 # GitOps deploy
 

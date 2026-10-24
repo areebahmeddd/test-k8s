@@ -47,7 +47,9 @@ kubectl logs -n argocd deploy/argocd-repo-server --tail=50  # Git and Kustomize 
 ```
 
 ArgoCD deploys what is pushed to the `dev` or `prod` branch, not your working tree. While the `cloudnativepg`
-Application is still installing the CNPG CRDs, `todo-app` keeps retrying.
+Application is still installing CNPG, `todo-app` keeps retrying; errors mentioning the `cnpg.io` webhook clear
+up once the operator is running. If every pod is ready but the Application stays `Progressing`, start
+`minikube tunnel`: the Traefik LoadBalancer and the Ingresses are waiting for an address.
 
 ## Routing
 
